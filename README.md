@@ -10,7 +10,7 @@ Remake of dblue_stretch in JUCE framework with some stuff added in.
 This plugin was not tested in every daw under every condition. Issues may occur
 such as audio getting desynced, crashes or lag.
 
-It wasn't tested on a mac and probably will not work.
+The provided .vst3 was built on a windows machine and may or may not work on a mac.
 
 # Info
 I made this plugin because:
