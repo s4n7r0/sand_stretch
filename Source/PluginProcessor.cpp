@@ -300,7 +300,7 @@ void sand_stretchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
                     for (int channel = 0; channel < numInputChannels_; ++channel) {
                         channelSample[channel].sampleOut = 0;
                     }
-                    sample--; //this looks dangerous. prevents desync in some cases.
+                    //sample--; //this is dangerous, but prevents desync in some cases.
                     continue;
                 }
 
