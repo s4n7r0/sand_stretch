@@ -3,7 +3,7 @@ Remake of dblue_stretch in JUCE framework with some stuff added in.
 
 [Download it from here.](https://github.com/s4n7r0/sand_stretch/releases)
 
-![image](https://github.com/s4n7r0/sand_stretch/assets/116836670/1418e547-cce3-42e6-83b7-c2d51aa1cca9)
+![image](https://github.com/s4n7r0/sand_stretch/assets/116836670/267690ba-e731-4682-a088-e9d52e7f38f7)
 
 # Important notes
 
