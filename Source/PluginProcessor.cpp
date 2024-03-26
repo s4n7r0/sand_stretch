@@ -227,7 +227,6 @@ void sand_stretchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
             for (auto sample = 0; sample < buffer.getNumSamples(); ++sample) {
 
                 if (stop_) break;
-                if (sampleIn[sample] == 0.f) break;
 
                 insertToBuffer(sampleIn[sample], currentSampleIn, channel);
                 currentSampleIn++;
@@ -240,12 +239,11 @@ void sand_stretchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
             for (auto sample = 0; sample < buffer.getNumSamples(); ++sample) {
 
                 //zCross
-                // TODO: do this only if parameters are changed
                 //channel needs to be 0 otherwise it may get desynced when hold and zcrossing was on before the trigger.
-                if (holding_ && zCrossWindow > 0 && channel == 0) {
+                if (holding_ && zCrossWindow > 0 && channel == 0 && zCrossWindow != zCrossWindow_ || zCrossOffset != zCrossOffset_) {
 
-                    if (zCrossWindow != zCrossWindow_) zCrossWindow_ = zCrossWindow;
-                    if (zCrossOffset != zCrossOffset_) zCrossOffset_ = zCrossOffset;
+                    zCrossWindow_ = zCrossWindow;
+                    zCrossOffset_ = zCrossOffset;
 
                     int offset = 0;
                     int windowAndOffset = zCrossWindow_ + zCrossOffset_;
@@ -297,9 +295,10 @@ void sand_stretchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
                 //this may desync the audio a bit.
                 //if hold was on before the trigger, this may result in a negative index.
                 if (currentOutAndOffsetBackwards < 0) {
-                    for (int channel = 0; channel < numInputChannels_; ++channel) {
+                    for (int channel = 0; channel <= numInputChannels_ - 1; ++channel) {
                         channelSample[channel].sampleOut = 0;
                     }
+                    //currentSampleOut = 0;
                     //sample--; //this is dangerous, but prevents desync in some cases.
                     continue;
                 }
@@ -444,6 +443,7 @@ void sand_stretchAudioProcessor::clearBuffer() {
     }
 
     stop_ = false;
+    holding_ = false;
     zCrossState_ = NONE;
 
 }
