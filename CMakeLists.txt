@@ -10,6 +10,14 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
     endif ()
 endif ()
 
+# download CPM.cmake
+file(
+  DOWNLOAD
+  https://github.com/cpm-cmake/CPM.cmake/releases/latest/download/CPM.cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmake/CPM.cmake
+#   EXPECTED_HASH SHA256=cc155ce02e7945e7b8967ddfaff0b050e958a723ef7aad3766d368940cb15494
+)
+
 # First, we'll add the CMake folder, incase we'll need to find_package later:
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 

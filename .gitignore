@@ -12,6 +12,7 @@ cmake-build-release
 CMakeFiles
 CMakeCache.txt
 cmake_install.cmake
+CPM.cmake
 CMakeScripts
 
 .idea
