@@ -57,6 +57,7 @@ public:
     void setSamples();
     void setBufferSize();
     void setRatio();
+    void setDeclickWindow(int newWindow);
     
 private:
 
@@ -66,6 +67,18 @@ private:
         float sampleOffset = 0;
     };
 
+    struct channelDeclickStruct {
+        bool areSamplesDeclicked = false;
+        bool declicking = false;
+    };
+
+    struct channelCrossfadeStruct {
+        float increasing = 0;
+        float decreasing = 1;
+        int indexIn = 0;
+        int indexOut = 0;
+    };
+
     juce::AudioProcessorValueTreeState parameters;
 
     enum enumZCROSSSTATE { NEGATIVE, NONE, POSITIVE };
@@ -73,6 +86,7 @@ private:
     std::atomic<float>* holdParameter = nullptr;
     std::atomic<float>* reverseParameter = nullptr;
     std::atomic<float>* removeDcOffsetParameter = nullptr;
+    std::atomic<float>* declickParameter = nullptr;
     std::atomic<float>* samplesParameter = nullptr;
     std::atomic<float>* skipSamplesParameter = nullptr;
     std::atomic<float>* crossfadeParameter = nullptr;
@@ -83,10 +97,7 @@ private:
     std::atomic<float>* zcrossParameter = nullptr;
     std::atomic<float>* zcrossOffsetParameter = nullptr;
 
-    juce::SmoothedValue<float> smoothBegin;
-    juce::SmoothedValue<float> smoothEnd;
-
-    std::vector<float> bufferArray[2];
+    std::vector<std::vector<float>> bufferArray;
     //TODO: Dynamically adjust zCrossArray to fit all samples
     std::vector<float> zCrossArray;
     std::vector<channelStruct> channelSample;
@@ -116,7 +127,19 @@ private:
     int zCrossHoldOffset_ = 0;
     bool zCrossHoldOffsetMoved_ = false;
 
+    bool crossfading = false;
+    std::vector<channelCrossfadeStruct> crossfadeChannel;
 
+    std::array<int, 6> declickChoices = { 0, 32, 64, 128, 256, 512 };
+    int declickWindow = 64;
+    int halfWindow = declickWindow >> 1;
+    int quarterWindow = halfWindow >> 1;
+    int declickWindowMinusOne = declickWindow - 1;
+    int halfWindowMinusOne = halfWindow - 1;
+    const int declickQuality = 1 << 0; //4
+    std::vector<std::array<float, 512>> declickSamples;
+    std::vector<channelDeclickStruct> declickChannel;
+    int declickChoice_ = 2;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (sand_stretchAudioProcessor)
 };
