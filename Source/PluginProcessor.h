@@ -52,38 +52,13 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
-    void insertToBuffer(float sample, int index, int channel);
-    void clearBuffer();
-    void setSamples();
-    void setBufferSize();
-    void setRatio();
-    void setDeclickWindow(int newWindow);
     
 private:
 
     stretch::StretchProcessor stretch_processor;
 
-    struct channelStruct {
-        int sampleIn = 0;
-        float sampleOut = 0;
-        float sampleOffset = 0;
-    };
-
-    struct channelDeclickStruct {
-        bool areSamplesDeclicked = false;
-        bool declicking = false;
-    };
-
-    struct channelCrossfadeStruct {
-        float increasing = 0;
-        float decreasing = 1;
-        int indexIn = 0;
-        int indexOut = 0;
-    };
-
     juce::AudioProcessorValueTreeState parameters;
 
-    enum enumZCROSSSTATE { NEGATIVE, NONE, POSITIVE };
     std::atomic<float>* triggerParameter = nullptr;
     std::atomic<float>* holdParameter = nullptr;
     std::atomic<float>* reverseParameter = nullptr;
@@ -99,50 +74,6 @@ private:
     std::atomic<float>* zcrossParameter = nullptr;
     std::atomic<float>* zcrossOffsetParameter = nullptr;
 
-
-    std::vector<std::vector<float>> bufferArray;
-    //TODO: Dynamically adjust zCrossArray to fit all samples
-    std::vector<float> zCrossArray;
-    std::vector<channelStruct> channelSample;
-    std::vector<float> previousSampleOffsets;
-
-    bool stop_ = false;
-    bool cleared_ = false;
-    bool holding_ = false;
-    bool zCrossing_ = false;
-    bool ratioChanged_ = false;
-    enumZCROSSSTATE zCrossState_ = NONE;
-
-    int samplesSize_ = 256;
-    int numInputChannels_ = 0;
-    int bufferSize_ = 8;
-
-    int maxSamplesInBuffer_ = 0;
-    int sampleRate_ = 0;
-
-    int ratioSamples_ = 1;
-    int samplesBoundary_ = 0;
-
-    float ratio_ = 1.0f;
-
-    int zCrossWindow_ = 0;
-    int zCrossOffset_ = 0;
-    int zCrossHoldOffset_ = 0;
-    bool zCrossHoldOffsetMoved_ = false;
-
-    bool crossfading = false;
-    std::vector<channelCrossfadeStruct> crossfadeChannel;
-
-    std::array<int, 6> declickChoices = { 0, 32, 64, 128, 256, 512 };
-    int declickWindow = 64;
-    int halfWindow = declickWindow >> 1;
-    int quarterWindow = halfWindow >> 1;
-    int declickWindowMinusOne = declickWindow - 1;
-    int halfWindowMinusOne = halfWindow - 1;
-    const int declickQuality = 1 << 0; //4
-    std::vector<std::array<float, 512>> declickSamples;
-    std::vector<channelDeclickStruct> declickChannel;
-    int declickChoice_ = 2;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (sand_stretchAudioProcessor)
 };
