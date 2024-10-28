@@ -31,6 +31,7 @@ namespace stretch {
 		};
 
 		void process(juce::AudioBuffer<float>&, APVTS&);
+		void check_params(int size, float ratio, int buffer_size, int declick);
 		void set_buffer_size(int);
 		void set_ratio(float);
 		void set_declick(int);
@@ -39,7 +40,7 @@ namespace stretch {
 		void insert_to_buffer(float, int, int);
 		void setup_arrays();
 
-		double sample_rate;
+		double sample_rate{ 44100 };
 		int num_input_channels = 0;
 		
 	private:
@@ -69,7 +70,7 @@ namespace stretch {
 		bool crossfading = false;
 		std::vector<channelCrossfadeStruct> crossfade_channel;
 
-		std::vector<std::vector<float>> buffer_array;
+		std::vector<juce::Array<float>> buffer_array;
 		//TODO: Dynamically adjust zCrossArray to fit all samples
 		std::vector<float> zcross_array;
 		std::vector<channelStruct> channel_sample;
@@ -82,7 +83,7 @@ namespace stretch {
 		int declick_window_minus_one = declick_window - 1;
 		int half_window_minus_one = half_window - 1;
 		const int declick_quality = 1 << 0; //4
-		std::vector<std::array<float, 512>> declick_samples;
+		std::vector<juce::Array<float>> declick_samples;
 		std::vector<channelDeclickStruct> declick_channel;
 		int declick_choice = 2;
 

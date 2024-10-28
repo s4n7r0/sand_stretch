@@ -17,21 +17,7 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
     auto p_zcross_offset = apvts.getRawParameterValue("zcrossOffsetParameter")->load();
     auto p_buffer_size = apvts.getRawParameterValue("bufferSizeParameter")->load();
 
-    if (p_samples_size != samples_size) {
-        set_samples(p_samples_size);
-    }
-
-    if (p_ratio != ratio) {
-        set_ratio(p_ratio);
-    }
-
-    if (p_buffer_size != buffer_size) {
-        set_buffer_size(p_buffer_size);
-    }
-
-    if (declick_window != p_declick) {
-        set_declick(p_declick);
-    }
+    check_params(p_samples_size, p_ratio, p_buffer_size, p_declick);
 
     for (auto channel = 0; channel < buffer.getNumChannels(); ++channel) {
 
@@ -93,7 +79,8 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
 
                 //zCross
                 //channel needs to be 0 otherwise it may get desynced when hold and zcrossing was on before the trigger.
-                if (holding && zcross_window > 0 && channel == 0 && (zcross_window != p_zcross_window || zcross_offset != p_zcross_offset)) {
+                /*
+                if (holding && p_zcross_window > 0 && channel == 0 && (zcross_window != p_zcross_window || zcross_offset != p_zcross_offset)) {
 
                     zcross_window = p_zcross_window;
                     zcross_offset = p_zcross_offset;
@@ -137,6 +124,7 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
                         channel_sample[channel].offset = zcross_array[window_and_offset];
                     }
                 }
+                */
 
                 int temp_holding = holding;
 
@@ -173,6 +161,7 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
 
                     set_samples(p_samples_size);
                 }
+                
 
                 float outputForwards = buffer_array[channel][forwardsIndex];
                 float outputBackwards = buffer_array[channel][backwardsIndex];
@@ -185,6 +174,7 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
                 float boundaryWithOffsetAndShit = (samples_boundary * p_skip_samples) + current_sample_offset + p_hold_offset;
 
                 //DC Offset
+                /*
                 if (p_remove_dc_offset && !dc_offset_found && samples_boundary > 0) {
 
                     float average{};
@@ -198,12 +188,14 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
 
                     dc_offset_found = true;
                 }
+                */
 
                 sample_out[sample] = outputForwards + dc_offset_sample;
 
                 int zCrossing = !zcrossing;
 
                 //Crossfade
+                /*
                 if (p_crossfade >= 0.01f) {
                     float actualBoundary = (samples_boundary * p_skip_samples - ((samples_size / ratio) * holding) * zCrossing);
                     int crossfadeSamples = actualBoundary * p_crossfade;
@@ -261,11 +253,14 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
                         indexIn = indexOut = 0;
                     }
                 }
+                */
 
                 //Declick
+                /*
                 if (p_remove_dc_offset && samples_boundary > declick_window) {
 
-                    const std::vector<float>::const_iterator buffer = buffer_array[channel].begin() + current_sample_offset;
+                    //float* temp_buffer = buffer_array[channel].getRawDataPointer() + (int)current_sample_offset;
+                    juce::Array<float> temp_buffer;
 
                     float actualBoundary = (samples_boundary * p_skip_samples - ((samples_size / ratio) * holding) * zCrossing);
                     if (actualBoundary <= declick_window) {
@@ -280,16 +275,17 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
                     if (!areSamplesDeclicked && !declicking) {
 
                         //the "click" should be in the middle of the array
-                        std::copy_n(buffer + local_hold_offset + actualBoundary - half_window_minus_one, half_window, declick_samples[channel].begin());
-                        std::copy_n(buffer + local_hold_offset + ratio_samples, half_window, declick_samples[channel].begin() + half_window);
-
+                        //std::copy_n(temp_buffer + local_hold_offset + (int)actualBoundary - half_window_minus_one, half_window, declick_samples[channel].begin());
+                        //std::copy_n(temp_buffer + local_hold_offset + ratio_samples, half_window, declick_samples[channel].begin() + half_window);
+                        declick_samples[channel].insertArray(-1, buffer_array[channel].getRawDataPointer() + local_hold_offset + (int)actualBoundary - half_window, half_window);
+                        declick_samples[channel].insertArray(-1, buffer_array[channel].getRawDataPointer() + local_hold_offset + ratio_samples, half_window);
                         if (p_reverse) std::reverse(declick_samples[channel].begin(), declick_samples[channel].begin() + declick_window);
 
                         float sum{};
                         float sum2{};
                         for (int i = 0; i < half_window; ++i) {
-                            sum += declick_samples[channel].at(i);
-                            sum2 += declick_samples[channel].at(declick_window_minus_one - i);
+                            sum += declick_samples[channel][i];
+                            sum2 += declick_samples[channel][declick_window_minus_one - i];
                         }
 
                         float morphRatio = 2 / (float)half_window;
@@ -300,8 +296,8 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
                             int iTimesTwo = i << 1;
 
                             //only use every second element, sum - even, sum2 - odd
-                            sum = (sum - declick_samples[channel].at(i)) + declick_samples[channel].at(half_window + iTimesTwo);
-                            sum2 = (sum2 - declick_samples[channel].at(declick_window_minus_one - iTimesTwo)) + declick_samples[channel].at(half_window_minus_one - iTimesTwo);
+                            sum = (sum - declick_samples[channel][i]) + declick_samples[channel][half_window + iTimesTwo];
+                            sum2 = (sum2 - declick_samples[channel][declick_window_minus_one - iTimesTwo]) + declick_samples[channel][half_window_minus_one - iTimesTwo];
 
                             //normalise samples to -1 <-> 1 range.
                             float mean = sum / declick_window;
@@ -313,18 +309,18 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
                             increasing += morphRatio;
 
                             //morph original samples into declicked ones.
-                            declick_samples[channel].at(iTimesTwo) = declick_samples[channel].at(i) * decreasing + mean * increasing;
-                            declick_samples[channel].at(iTimesTwo - 1) = (declick_samples[channel].at(iTimesTwo - 2) + declick_samples[channel].at(iTimesTwo)) / 2; //fill a sample in between
-
-                            declick_samples[channel].at(declick_window_minus_one - iTimesTwo) = declick_samples[channel].at(declick_window_minus_one - iTimesTwo) * decreasing + mean2 * increasing;
-                            declick_samples[channel].at(declick_window - iTimesTwo) = (declick_samples[channel].at(declick_window_minus_one - iTimesTwo) + declick_samples[channel].at(declick_window + 1 - iTimesTwo)) / 2;
+                            declick_samples[channel].set(iTimesTwo, declick_samples[channel][i] * decreasing + mean * increasing);
+                            declick_samples[channel].set(iTimesTwo - 1, declick_samples[channel][iTimesTwo - 2] + declick_samples[channel][iTimesTwo] / 2); //fill a sample in between
+                                                    
+                            declick_samples[channel].set(declick_window_minus_one - iTimesTwo, declick_samples[channel][declick_window_minus_one - iTimesTwo] * decreasing + mean2 * increasing);
+                            declick_samples[channel].set(declick_window - iTimesTwo, declick_samples[channel][declick_window_minus_one - iTimesTwo] + declick_samples[channel][declick_window + 1 - iTimesTwo] / 2);
 
                             //if declick_window is even, treat last two samples seperately
                             //                      checking last bit to see if even 
                             if (i == quarter_window - 1 && !(declick_window & 1)) {
-                                float temp = declick_samples[channel].at(half_window_minus_one);
-                                declick_samples[channel].at(half_window_minus_one) = (declick_samples[channel].at(half_window - 2) + declick_samples[channel].at(half_window + 1) + declick_samples[channel].at(half_window + 2)) / 3;
-                                declick_samples[channel].at(half_window) = (declick_samples[channel].at(half_window + 2) + declick_samples[channel].at(half_window + 3) + declick_samples[channel].at(half_window - 2)) / 3;
+                                float temp = declick_samples[channel][half_window_minus_one];
+                                declick_samples[channel].set(half_window_minus_one, declick_samples[channel][half_window - 2] + declick_samples[channel][half_window + 1] + declick_samples[channel][half_window + 2] / 3);
+                                declick_samples[channel].set(half_window, declick_samples[channel][half_window + 2] + declick_samples[channel][half_window + 3] + declick_samples[channel][half_window - 2] / 3);
                             }
                         }
                         areSamplesDeclicked = true;
@@ -334,11 +330,11 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
 
                     if (current_sample_out >= actualBoundary - half_window && !(index >= declick_window || index < 0)) {
                         declicking = true;
-                        sample_out[sample] = declick_samples[channel].at(index);
+                        sample_out[sample] = declick_samples[channel][index];
                         sample_out[sample] += dc_offset_sample;
                     }
                     else if (current_sample_out < half_window) {
-                        sample_out[sample] = declick_samples[channel].at(half_window + current_sample_out);
+                        sample_out[sample] = declick_samples[channel][half_window + current_sample_out];
                         sample_out[sample] += dc_offset_sample;
                     }
                     else {
@@ -346,6 +342,7 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
                         areSamplesDeclicked = false;
                     }
                 }
+                */
 
                 current_sample_out += 1 * p_skip_samples;
 
@@ -365,6 +362,24 @@ void StretchProcessor::process(juce::AudioBuffer<float>& buffer, APVTS& apvts) {
 
 }
 
+inline void StretchProcessor::check_params(int p_sample_size, float p_ratio, int p_buffer_size, int p_declick_window) {
+    if (p_sample_size != samples_size) {
+        set_samples(p_sample_size);
+    }
+
+    if (p_ratio != ratio) {
+        set_ratio(p_ratio);
+    }
+
+    if (p_buffer_size != buffer_size) {
+        set_buffer_size(p_buffer_size);
+    }
+
+    if (p_declick_window != declick_window) {
+        set_declick(p_declick_window);
+    }
+}
+
 void StretchProcessor::insert_to_buffer(float sample, int index, int channel) {
     //make sure samples from all channels are gathered.
     for (int i = 0; i < num_input_channels; ++i) {
@@ -374,7 +389,7 @@ void StretchProcessor::insert_to_buffer(float sample, int index, int channel) {
         }
     }
 
-    buffer_array[channel][index] = sample;
+    buffer_array[channel].add(sample);
 
     //collect indexes of points where summed samples crossed zero.
     static int zcross_array_counter = 0;
@@ -427,6 +442,27 @@ void StretchProcessor::set_buffer_size(int new_size) {
     zcross_array.resize(max_samples_in_buffer / 2);
 }
 
+void StretchProcessor::clear_buffer() {
+    for (int channel = 0; channel < num_input_channels; ++channel) {
+        for (int index = 0; index < max_samples_in_buffer; ++index) {
+            buffer_array[channel].removeRange(0, max_samples_in_buffer);
+        }
+        channel_sample[channel].in = 0;
+        channel_sample[channel].offset = 0;
+        channel_sample[channel].out = 0;
+    }
+
+    for (int index = 0; index < zcross_array.size(); ++index) {
+        zcross_array[index] = 0;
+    }
+
+    stop = false;
+    holding = false;
+    zcross_state = NONE;
+    cleared = true;
+
+}
+
 void StretchProcessor::set_ratio(float new_ratio) {
     ratio = new_ratio;
     for (auto channel : declick_channel) channel.is_declicked = false;
@@ -440,8 +476,8 @@ void StretchProcessor::set_ratio(float new_ratio) {
 }
 
 void StretchProcessor::set_declick(int new_index = 0) {
+    if (!new_index) return;
     int newWindow = declick_choices[new_index];
-    if (!newWindow) return;
 
     declick_window = newWindow;
     half_window = declick_window >> 1;
@@ -468,27 +504,6 @@ void StretchProcessor::set_samples(int new_samples) {
     samples_boundary = samples_size;
 
     ratio_samples = lround(samples_size / ratio);
-}
-
-void StretchProcessor::clear_buffer() {
-    for (int channel = 0; channel < num_input_channels; ++channel) {
-        for (int index = 0; index < max_samples_in_buffer; ++index) {
-            buffer_array[channel][index] = 0.0f;
-        }
-        channel_sample[channel].in = 0;
-        channel_sample[channel].offset = 0;
-        channel_sample[channel].out = 0;
-    }
-
-    for (int index = 0; index < zcross_array.size(); ++index) {
-        zcross_array[index] = 0;
-    }
-
-    stop = false;
-    holding = false;
-    zcross_state = NONE;
-    cleared = true;
-
 }
 
 void StretchProcessor::setup_arrays()
