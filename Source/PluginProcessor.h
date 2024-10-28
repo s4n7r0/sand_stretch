@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <JuceHeader.h>
+#include "StretchProcessor.h"
 
 //==============================================================================
 /**
@@ -61,6 +61,8 @@ public:
     
 private:
 
+    stretch::StretchProcessor stretch_processor;
+
     struct channelStruct {
         int sampleIn = 0;
         float sampleOut = 0;
@@ -96,6 +98,7 @@ private:
     //std::atomic<float>* multiplierParameter= nullptr;
     std::atomic<float>* zcrossParameter = nullptr;
     std::atomic<float>* zcrossOffsetParameter = nullptr;
+
 
     std::vector<std::vector<float>> bufferArray;
     //TODO: Dynamically adjust zCrossArray to fit all samples

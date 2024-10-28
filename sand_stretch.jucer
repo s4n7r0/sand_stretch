@@ -6,6 +6,10 @@
               companyWebsite="https://github.com/s4n7r0" pluginManufacturer="sandr0">
   <MAINGROUP id="bs6HM3" name="sand_stretch">
     <GROUP id="{7A2922A2-6547-924F-F90E-3FC45E9489A9}" name="Source">
+      <FILE id="qUzPJ2" name="StretchProcessor.h" compile="0" resource="0"
+            file="Source/StretchProcessor.h"/>
+      <FILE id="agdQOw" name="StretchProcessor.cpp" compile="1" resource="0"
+            file="Source/StretchProcessor.cpp"/>
       <FILE id="JCU6YS" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="yORfjE" name="PluginProcessor.h" compile="0" resource="0"

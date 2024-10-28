@@ -13,7 +13,7 @@
 //==============================================================================
 sand_stretchAudioProcessor::sand_stretchAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
+     : stretch_processor(getSampleRate(), getNumInputChannels()), AudioProcessor(BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
@@ -175,6 +175,8 @@ bool sand_stretchAudioProcessor::isBusesLayoutSupported (const BusesLayout& layo
 void sand_stretchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
     juce::ScopedNoDenormals noDenormals;
 
+    stretch_processor.process(buffer, parameters);
+
     auto trigger = triggerParameter->load();
     auto hold = holdParameter->load();
     auto reverse = reverseParameter->load();
@@ -202,6 +204,7 @@ void sand_stretchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
     }
 
     if (declickWindow != declick) {
+        stretch_processor.set_declick((int)declickParameter->load());
         setDeclickWindow((int)declickParameter->load());
     }
 
@@ -227,14 +230,23 @@ void sand_stretchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
 
         if (trigger && hold && !holding_) {
             holding_ = true;
+
+            stretch_processor.set_ratio(ratio);
             setRatio();
         }
 
         if (!hold && holding_) {
             holding_ = false;
-            if (zCrossing_) setSamples();
+
+            if (zCrossing_) {
+                stretch_processor.set_samples(samplesSize);
+                setSamples();
+            }
+
             zCrossing_ = false;
             zCrossHoldOffsetMoved_ = true;
+
+            stretch_processor.set_ratio(ratio);
             setRatio();
         }
 
@@ -246,6 +258,7 @@ void sand_stretchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
 
                 if (stop_) break;
 
+                stretch_processor.insert_to_buffer(sampleIn[sample], currentSampleIn, channel);
                 insertToBuffer(sampleIn[sample], currentSampleIn, channel);
                 currentSampleIn++;
 
@@ -336,6 +349,7 @@ void sand_stretchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
                         previousSampleOffsets[channel] = 0.f;
                     }
 
+                    stretch_processor.set_samples(samplesSize);
                     setSamples();
                 }
 
@@ -434,6 +448,9 @@ void sand_stretchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
 
                     float actualBoundary = (samplesBoundary_ * skipSamples - ((samplesSize_ / ratio) * holding) * zCrossing);
                     if (actualBoundary <= declickWindow) {
+
+                        stretch_processor.set_declick((int)declickParameter->load() - 1);
+
                         setDeclickWindow((int)declickParameter->load()-1);
                     }
 
@@ -522,6 +539,9 @@ void sand_stretchAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, 
         }
         
         if (!trigger && !cleared_) {
+
+            stretch_processor.clear_buffer();
+
             clearBuffer();
             cleared_ = true;
         }
