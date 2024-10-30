@@ -14,23 +14,20 @@
 //==============================================================================
 /**
 */
-class sand_stretchAudioProcessorEditor  : public juce::AudioProcessorEditor, private juce::Slider::Listener
+class Sand_stretch_remakeAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
-    sand_stretchAudioProcessorEditor (sand_stretchAudioProcessor&);
-    ~sand_stretchAudioProcessorEditor() override;
+    Sand_stretch_remakeAudioProcessorEditor (Sand_stretch_remakeAudioProcessor&);
+    ~Sand_stretch_remakeAudioProcessorEditor() override;
 
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
 
 private:
-
-    void sliderValueChanged(juce::Slider* slider) override;
-
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
-    sand_stretchAudioProcessor& audioProcessor;
-    
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (sand_stretchAudioProcessorEditor)
+    Sand_stretch_remakeAudioProcessor& audioProcessor;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sand_stretch_remakeAudioProcessorEditor)
 };

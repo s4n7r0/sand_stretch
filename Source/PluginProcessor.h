@@ -8,17 +8,17 @@
 
 #pragma once
 
-#include "StretchProcessor.h"
+#include <JuceHeader.h>
 
 //==============================================================================
 /**
 */
-class sand_stretchAudioProcessor  : public juce::AudioProcessor
+class Sand_stretch_remakeAudioProcessor  : public juce::AudioProcessor
 {
 public:
     //==============================================================================
-    sand_stretchAudioProcessor();
-    ~sand_stretchAudioProcessor() override;
+    Sand_stretch_remakeAudioProcessor();
+    ~Sand_stretch_remakeAudioProcessor() override;
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -48,32 +48,12 @@ public:
     void setCurrentProgram (int index) override;
     const juce::String getProgramName (int index) override;
     void changeProgramName (int index, const juce::String& newName) override;
-    
+
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
-    
+
 private:
-
-    stretch::StretchProcessor stretch_processor;
-
-    juce::AudioProcessorValueTreeState parameters;
-
-    std::atomic<float>* triggerParameter = nullptr;
-    std::atomic<float>* holdParameter = nullptr;
-    std::atomic<float>* reverseParameter = nullptr;
-    std::atomic<float>* removeDcOffsetParameter = nullptr;
-    std::atomic<float>* declickParameter = nullptr;
-    std::atomic<float>* samplesParameter = nullptr;
-    std::atomic<float>* skipSamplesParameter = nullptr;
-    std::atomic<float>* crossfadeParameter = nullptr;
-    std::atomic<float>* holdOffsetParameter = nullptr;
-    std::atomic<float>* bufferSizeParameter = nullptr;
-    std::atomic<float>* ratioParameter = nullptr;
-    //std::atomic<float>* multiplierParameter= nullptr;
-    std::atomic<float>* zcrossParameter = nullptr;
-    std::atomic<float>* zcrossOffsetParameter = nullptr;
-
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (sand_stretchAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sand_stretch_remakeAudioProcessor)
 };
