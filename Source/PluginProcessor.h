@@ -9,16 +9,17 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "StretchProcessor.h"
 
 //==============================================================================
-/**
+/*
 */
-class Sand_stretch_remakeAudioProcessor  : public juce::AudioProcessor
+class StretchAudioProcessor  : public juce::AudioProcessor
 {
 public:
     //==============================================================================
-    Sand_stretch_remakeAudioProcessor();
-    ~Sand_stretch_remakeAudioProcessor() override;
+    StretchAudioProcessor();
+    ~StretchAudioProcessor() override;
 
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -53,7 +54,17 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    int get_editor_width();
+    int get_editor_height();
+    void set_editor_size(int width, int height);
+
+    stretch::Processor stretch_processor;
+    UndoManager undo;
+    stretch::APVTS apvts;
 private:
+
+    int buffer_size{ 0 };
+
     //==============================================================================
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sand_stretch_remakeAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StretchAudioProcessor)
 };

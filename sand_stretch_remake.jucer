@@ -6,6 +6,16 @@
               pluginName="sand_stretch2">
   <MAINGROUP id="ALHTTM" name="sand_stretch_remake">
     <GROUP id="{FDEA2C7D-880D-8010-949E-BF1317FBAC38}" name="Source">
+      <FILE id="xXwO71" name="StretchEditor.cpp" compile="1" resource="0"
+            file="Source/StretchEditor.cpp"/>
+      <FILE id="WZsq2Y" name="StretchComponents.h" compile="0" resource="0"
+            file="Source/StretchComponents.h"/>
+      <FILE id="Y8bxdS" name="StretchEditor.h" compile="0" resource="0" file="Source/StretchEditor.h"/>
+      <FILE id="KDwASX" name="StretchProcessor.cpp" compile="1" resource="0"
+            file="Source/StretchProcessor.cpp"/>
+      <FILE id="LbyhqD" name="StretchProcessor.h" compile="0" resource="0"
+            file="Source/StretchProcessor.h"/>
+      <FILE id="IF5Sng" name="StretchParams.h" compile="0" resource="0" file="Source/StretchParams.h"/>
       <FILE id="UpYgxi" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="z6twIr" name="PluginProcessor.h" compile="0" resource="0"

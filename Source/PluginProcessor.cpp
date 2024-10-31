@@ -10,9 +10,9 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-Sand_stretch_remakeAudioProcessor::Sand_stretch_remakeAudioProcessor()
+StretchAudioProcessor::StretchAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
+     : apvts(*this, &undo, "PARAMETERS", stretch::create_layout()), AudioProcessor(BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
@@ -24,17 +24,17 @@ Sand_stretch_remakeAudioProcessor::Sand_stretch_remakeAudioProcessor()
 {
 }
 
-Sand_stretch_remakeAudioProcessor::~Sand_stretch_remakeAudioProcessor()
+StretchAudioProcessor::~StretchAudioProcessor()
 {
 }
 
 //==============================================================================
-const juce::String Sand_stretch_remakeAudioProcessor::getName() const
+const juce::String StretchAudioProcessor::getName() const
 {
     return JucePlugin_Name;
 }
 
-bool Sand_stretch_remakeAudioProcessor::acceptsMidi() const
+bool StretchAudioProcessor::acceptsMidi() const
 {
    #if JucePlugin_WantsMidiInput
     return true;
@@ -43,7 +43,7 @@ bool Sand_stretch_remakeAudioProcessor::acceptsMidi() const
    #endif
 }
 
-bool Sand_stretch_remakeAudioProcessor::producesMidi() const
+bool StretchAudioProcessor::producesMidi() const
 {
    #if JucePlugin_ProducesMidiOutput
     return true;
@@ -52,7 +52,7 @@ bool Sand_stretch_remakeAudioProcessor::producesMidi() const
    #endif
 }
 
-bool Sand_stretch_remakeAudioProcessor::isMidiEffect() const
+bool StretchAudioProcessor::isMidiEffect() const
 {
    #if JucePlugin_IsMidiEffect
     return true;
@@ -61,50 +61,50 @@ bool Sand_stretch_remakeAudioProcessor::isMidiEffect() const
    #endif
 }
 
-double Sand_stretch_remakeAudioProcessor::getTailLengthSeconds() const
+double StretchAudioProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int Sand_stretch_remakeAudioProcessor::getNumPrograms()
+int StretchAudioProcessor::getNumPrograms()
 {
     return 1;   // NB: some hosts don't cope very well if you tell them there are 0 programs,
                 // so this should be at least 1, even if you're not really implementing programs.
 }
 
-int Sand_stretch_remakeAudioProcessor::getCurrentProgram()
+int StretchAudioProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void Sand_stretch_remakeAudioProcessor::setCurrentProgram (int index)
+void StretchAudioProcessor::setCurrentProgram (int index)
 {
 }
 
-const juce::String Sand_stretch_remakeAudioProcessor::getProgramName (int index)
+const juce::String StretchAudioProcessor::getProgramName (int index)
 {
     return {};
 }
 
-void Sand_stretch_remakeAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void StretchAudioProcessor::changeProgramName (int index, const juce::String& newName)
 {
 }
 
 //==============================================================================
-void Sand_stretch_remakeAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void StretchAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
 }
 
-void Sand_stretch_remakeAudioProcessor::releaseResources()
+void StretchAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool Sand_stretch_remakeAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool StretchAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
   #if JucePlugin_IsMidiEffect
     juce::ignoreUnused (layouts);
@@ -129,7 +129,7 @@ bool Sand_stretch_remakeAudioProcessor::isBusesLayoutSupported (const BusesLayou
 }
 #endif
 
-void Sand_stretch_remakeAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void StretchAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
@@ -159,25 +159,25 @@ void Sand_stretch_remakeAudioProcessor::processBlock (juce::AudioBuffer<float>& 
 }
 
 //==============================================================================
-bool Sand_stretch_remakeAudioProcessor::hasEditor() const
+bool StretchAudioProcessor::hasEditor() const
 {
     return true; // (change this to false if you choose to not supply an editor)
 }
 
-juce::AudioProcessorEditor* Sand_stretch_remakeAudioProcessor::createEditor()
+juce::AudioProcessorEditor* StretchAudioProcessor::createEditor()
 {
-    return new Sand_stretch_remakeAudioProcessorEditor (*this);
+    return new StretchAudioProcessorEditor (*this);
 }
 
 //==============================================================================
-void Sand_stretch_remakeAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void StretchAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
 }
 
-void Sand_stretch_remakeAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void StretchAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
@@ -187,5 +187,22 @@ void Sand_stretch_remakeAudioProcessor::setStateInformation (const void* data, i
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new Sand_stretch_remakeAudioProcessor();
+    return new StretchAudioProcessor();
+}
+
+
+int StretchAudioProcessor::get_editor_width() {
+    auto size = apvts.state.getOrCreateChildWithName("lastSize", &undo);
+    return size.getProperty("width", stretch::size_width);
+}
+
+int StretchAudioProcessor::get_editor_height() {
+    auto size = apvts.state.getOrCreateChildWithName("lastSize", &undo);
+    return size.getProperty("height", stretch::size_height);
+}
+
+void StretchAudioProcessor::set_editor_size(int width, int height) {
+    auto size = apvts.state.getOrCreateChildWithName("lastSize", &undo);
+    size.setProperty("width", width, &undo);
+    size.setProperty("height", height, &undo);
 }
