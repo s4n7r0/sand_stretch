@@ -37,18 +37,19 @@ namespace stretch {
 	};
 
 	const IRec help_bounds({ (int)size_width - 35, 10, 25, 25 });
-	const IRec trigger_bounds({ 25, 10, 75, 25 });
-	const IRec hold_bounds({ 100, 10, 75, 25 });
-	//const IRec hold_offset_bounds({ (int)(size_width / 1.175), 85, 50, 50 }); use the semitone thing from napalm to set offset instead of another slider
-	const IRec grain_bounds({ 25, 35, (int)(size_width / 1.25), 50 });
-	const IRec ratio_bounds({ 25, 85, (int)(size_width / 1.25), 50 });
-	//const IRec zcross_window_bounds({ 25, 85, (int)(size_width / 1.25), 50 });
-	//const IRec zcross_offset_bounds({ (int)(size_width / 1.175), 85, 50, 50 }); use the semitone thing from napalm to set offset instead of another slider
+	const IRec trigger_bounds({ 37, 10	   , 75, 25 });
+	const IRec hold_bounds	 ({ 37 + 75    , 10, 55, 25 });
+	const IRec offset_bounds ({ 112 + 55   , 10, 50, 25 });
+	const IRec reverse_bounds({ 25 + 75 * 2, 10, 75, 25 });
+	const IRec grain_bounds  ({ 25, 35, (int)(size_width / 1.25), 50 });
+	const IRec ratio_bounds  ({ 25, 35 + 50, (int)(size_width / 1.25), 50 });
 
+	//remember to update params header too
 	const std::vector<IRec> components_bounds{
 												help_bounds,
 												trigger_bounds,
 												hold_bounds,
+												offset_bounds,
 												grain_bounds,
 												ratio_bounds
 	};
@@ -72,11 +73,13 @@ namespace stretch {
 	//call set_font after using
 	const juce::Font monospace_font(juce::FontOptions(juce::Font::getDefaultMonospacedFontName(), 0, juce::Font::plain));
 
-	const String trigger_text	("Trigger:		 blablabla");
-	const String hold_text		("Hold:			 blablabla");
-	const String grain_text		("Grain Size:	 blablabla");
-	const String ratio_text		("Ratio:		 blablabla");
-	const String zcross_text	("ZCross Window: blablabla");
+	const String trigger_text	("Trigger:		 guess what it does");
+	const String hold_text		("Hold:			 holds current grain in place");
+	const String offset_text		("Offset:			 offsets grain's position when hold is on");
+	const String reverse_text		("Reverse:			 outputs samples in reverse");
+	const String grain_text		("Grain Size:	 how many samples to keep in one grain");
+	const String ratio_text		("Ratio:		 stretches input by that amount");
+	const String zcross_text	("ZCross Window: holds grains where beginning and end sample crossed 0");
 
 	const juce::String contact_text("If you have any issues, please contact me on \ndiscord: .sandr0");
 	const juce::String version_text("Ver: " + STRETCH_VER);

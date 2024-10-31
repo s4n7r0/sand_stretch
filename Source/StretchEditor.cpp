@@ -41,6 +41,8 @@ void StretchAudioProcessorEditor::draw_labels(juce::Graphics& g) {
 	temp_bounds.setWidth(slider_width);
 	g.drawFittedText(juce::String("ratio"), temp_bounds, juce::Justification::right, 4, 0);
 
+	set_font_size(g, 15 * abs_scale);
+
 }
 
 void StretchAudioProcessorEditor::draw_help(juce::Graphics& g) {

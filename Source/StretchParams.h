@@ -24,8 +24,8 @@ namespace stretch
 	const juce::Range<float> bool_range({ 0, 1 });
 	const juce::Range<float> grain_range({ MIN_GRAIN_SIZE, MAX_GRAIN_SIZE});
 	const juce::Range<float> ratio_range({ MIN_RATIO, MAX_RATIO }); //lol
-	//help, trigger, hold, grain, ratio
-	const std::vector<juce::Range<float>> range_vector {bool_range, bool_range, bool_range, grain_range, ratio_range};
+	const juce::Range<float> hold_offset_range({ 0, MAX_HOLD_OFFSET });
+	const juce::Range<float> zcross_offset_range({ 0, MAX_ZCROSS_HOLD_OFFSET });
 
 	using APVTS = juce::AudioProcessorValueTreeState;
 	using Layout = APVTS::ParameterLayout;
@@ -36,8 +36,9 @@ namespace stretch
 	using Attributes = juce::AudioProcessorValueTreeStateParameterAttributes;
 	using paramID = juce::ParameterID;
 
-	enum PARAMS_IDS : int { help, trigger, hold, grain, ratio, end }; //also components ids
-	const std::vector<juce::String> PARAMS_STRING_IDS{ "help", "trigger", "hold", "grain", "ratio", "end"};
+	enum PARAMS_IDS : int							   { help,       trigger,	 hold,		 offset,            grain,      ratio,   end }; //also components ids
+	const std::vector<juce::String> PARAMS_STRING_IDS  {"help",     "trigger",  "hold",		"offset",          "grain",    "ratio", "end"};
+	const std::vector<juce::Range<float>> range_vector {bool_range, bool_range, bool_range, hold_offset_range, grain_range, ratio_range};
 
 	inline void add_params(UniquePVector& params) {
 
@@ -66,6 +67,14 @@ namespace stretch
 			.withStringFromValueFunction(string_from_val_0d)
 			.withValueFromStringFunction(val_from_string)
 			.withBoolean(true))
+		);		
+		
+		params.push_back(
+			std::make_unique<APVTS::Parameter>(paramID{ "offset", offset }, "Offset",
+			NRange{ hold_offset_range.getStart(), hold_offset_range.getEnd(), 1.f}, 0.f,
+			Attributes()
+			.withStringFromValueFunction(string_from_val_0d)
+			.withValueFromStringFunction(val_from_string))
 		);
 
 		params.push_back(

@@ -17,6 +17,7 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     new components::AttachedTextButton  ("?"),
     new components::AttachedToggleButton(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::trigger]),
     new components::AttachedToggleButton(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::hold]),
+    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::offset]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::grain]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::ratio])
     }
@@ -28,12 +29,20 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
 
     components[PID::help]->get()->setColour(1, colours::component_background);
 
+    auto offset = dynamic_cast<components::AttachedSlider*>(components[PID::offset]);
+
+    offset->param.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
+    offset->param.setSliderSnapsToMousePosition(false);
+    offset->param.setColour(juce::Slider::trackColourId, colours::invisible);
+    offset->param.setColour(juce::Slider::backgroundColourId, colours::thumb);
+
     for (int i = PID::help; i < PID::end; ++i) {
         components[i]->set_bounds(components_bounds[i]);
 
-        if (i >= PID::grain && i <= PID::end) {
+        if (i >= PID::grain && i <= PID::ratio) {
             juce::Range<double> range({ range_vector[i].getStart(), range_vector[i].getEnd() });
             components::AttachedSlider* slider = dynamic_cast<components::AttachedSlider*>(components[i]);
+
             int num_decimal = (i == PID::grain) ? 0 : 2;
             slider->param.setNumDecimalPlacesToDisplay(num_decimal);
             slider->param.setTextBoxStyle(slider->param.getTextBoxPosition(), 1, 50, 25);
@@ -83,10 +92,11 @@ void StretchAudioProcessorEditor::resized()
 
     IRec temp_bounds;
     int abs_slider = int(slider_width / abs_scale);
-    components::AttachedTextButton* help = dynamic_cast<components::AttachedTextButton*>(components[PID::help]);
+    auto help = dynamic_cast<components::AttachedTextButton*>(components[PID::help]);
 
     components[PID::trigger]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
     components[PID::hold]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
+    components[PID::offset]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
 
     temp_bounds = help->original_bounds;
     help->param.setCentrePosition(0, 0);
