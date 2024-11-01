@@ -12,7 +12,7 @@
 //==============================================================================
 StretchAudioProcessor::StretchAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : apvts(*this, &undo, "PARAMETERS", stretch::create_layout()), AudioProcessor(BusesProperties()
+     :  undo(), apvts(*this, &undo, "PARAMETERS", stretch::create_layout()), stretch_processor(), AudioProcessor(BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
@@ -93,8 +93,10 @@ void StretchAudioProcessor::changeProgramName (int index, const juce::String& ne
 //==============================================================================
 void StretchAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    stretch_processor.num_channels = getNumInputChannels();
+    stretch_processor.sample_rate = sampleRate;
+    stretch_processor.setup();
+    stretch_processor.set_grain(apvts);
 }
 
 void StretchAudioProcessor::releaseResources()
@@ -131,25 +133,20 @@ bool StretchAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 
 void StretchAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    juce::ScopedNoDenormals noDenormals;
+    //juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
+    bool trigger = (bool)*apvts.getRawParameterValue("trigger");
+
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
+    if (trigger) {
+        stretch_processor.fill_buffer(buffer);
+        stretch_processor.process(buffer);
+    } else if (stretch_processor.buffer_is_dirty) stretch_processor.clear_buffer();
+
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);

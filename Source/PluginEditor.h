@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "StretchEditor.h"
-
+using namespace stretch::components;
 //==============================================================================
 /**
 */
@@ -51,13 +51,12 @@ private:
     std::vector<String> help_texts;
     bool help_state;
 
-    std::vector<stretch::components::AttachedComponent*> components;
+    std::vector<AttachedComponent*> components; // TODO: fix the leak
 
     stretch::StretchBounds grain_text_bounds;
     stretch::StretchBounds ratio_text_bounds;
 
     //stretch::URLTimer url_timer;
-
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StretchAudioProcessorEditor)
 };

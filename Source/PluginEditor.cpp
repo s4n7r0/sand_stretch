@@ -9,6 +9,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "StretchEditor.h"
+#include <Windows.h>
 
 using namespace stretch;
 //==============================================================================
@@ -23,13 +24,15 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     }
 {
     using PID = PARAMS_IDS;
+    using PASlider = AttachedSlider*;
+    using PAToggle = AttachedToggleButton*;
 
     setSize (400, 300);
     setup();
 
     components[PID::help]->get()->setColour(1, colours::component_background);
 
-    auto offset = dynamic_cast<components::AttachedSlider*>(components[PID::offset]);
+    auto offset = dynamic_cast<PASlider>(components[PID::offset]);
 
     offset->param.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
     offset->param.setSliderSnapsToMousePosition(false);
@@ -41,7 +44,7 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
 
         if (i >= PID::grain && i <= PID::ratio) {
             juce::Range<double> range({ range_vector[i].getStart(), range_vector[i].getEnd() });
-            components::AttachedSlider* slider = dynamic_cast<components::AttachedSlider*>(components[i]);
+            PASlider slider = dynamic_cast<PASlider>(components[i]);
 
             int num_decimal = (i == PID::grain) ? 0 : 2;
             slider->param.setNumDecimalPlacesToDisplay(num_decimal);
@@ -52,15 +55,29 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
         addAndMakeVisible(components[i]->get(), 0);
     }
 
+    auto grain = dynamic_cast<PASlider>(components[PID::grain]);
+    auto ratio = dynamic_cast<PASlider>(components[PID::ratio]);
+
+    grain->param.onValueChange = [&]() {
+        audioProcessor.stretch_processor.set_grain(audioProcessor.apvts);
+        };
+
+    ratio->param.onValueChange = [&]() {
+        audioProcessor.stretch_processor.set_grain(audioProcessor.apvts);
+        };
+
     grain_text_bounds = StretchBounds(components[PID::grain]->get()->getBounds(), -20);
     ratio_text_bounds = StretchBounds(components[PID::ratio]->get()->getBounds(), -20);
-    
+
     resized();
 
 }
 
 StretchAudioProcessorEditor::~StretchAudioProcessorEditor()
 {
+    //for (auto component : components) {
+    //    delete component;
+    //}
 }
 
 //==============================================================================
