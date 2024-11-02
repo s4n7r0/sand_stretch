@@ -96,7 +96,6 @@ void StretchAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
     stretch_processor.num_channels = getNumInputChannels();
     stretch_processor.sample_rate = sampleRate;
     stretch_processor.setup();
-    stretch_processor.set_grain(apvts);
 }
 
 void StretchAudioProcessor::releaseResources()
@@ -133,26 +132,23 @@ bool StretchAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) 
 
 void StretchAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    //juce::ScopedNoDenormals noDenormals;
+    juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     bool trigger = (bool)*apvts.getRawParameterValue("trigger");
 
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
+    //for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
+    //    buffer.clear (i, 0, buffer.getNumSamples());
+
+    //maybe passivelly fill the buffer?
+    //eg fill buffer up to max grain_size * 2 and then increase limit if trigger is on
 
     if (trigger) {
         stretch_processor.fill_buffer(buffer);
         stretch_processor.process(buffer);
     } else if (stretch_processor.buffer_is_dirty) stretch_processor.clear_buffer();
 
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
-    }
 }
 
 //==============================================================================

@@ -9,7 +9,7 @@ namespace stretch
 	const float size_width = 400;
 	const float size_height = 200;
 
-	const int MAX_GRAIN_SIZE = 4096 * 4 + 1; //adding one so it doesn't click when range is set to max
+	const int MAX_GRAIN_SIZE = 4096 * 4; //adding one so it doesn't click when range is set to max
 	const int MAX_SAMPLES_IN_BUFFER = MAX_GRAIN_SIZE * 32; // (2 << 16) + 4
 	const int MIN_GRAIN_SIZE = 16;
 

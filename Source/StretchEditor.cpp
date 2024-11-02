@@ -73,3 +73,19 @@ void StretchAudioProcessorEditor::draw_help(juce::Graphics& g) {
 		help_state = false;
 	}
 }
+
+void StretchAudioProcessorEditor::draw_debug(juce::Graphics& g) {
+
+	using namespace stretch;
+
+	set_font_size(g, 15 * abs_scale);
+
+	IRec debug_bound(25, 200, size_width, 25);
+
+	for (int i = 0; i < 5; ++i) {
+		debug_bound.setX(200 + 25 * i);
+		g.drawFittedText(audioProcessor.stretch_processor.debug_strings[i], debug_bound , juce::Justification::right, 1, 0);
+	}
+
+
+}

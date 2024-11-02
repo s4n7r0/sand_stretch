@@ -50,21 +50,16 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
             slider->param.setNumDecimalPlacesToDisplay(num_decimal);
             slider->param.setTextBoxStyle(slider->param.getTextBoxPosition(), 1, 50, 25);
             slider->param.setRange(range, 0.01f);
+            slider->param.onValueChange = [&]() { set_stretch_params(); };
         }
 
         addAndMakeVisible(components[i]->get(), 0);
     }
 
-    auto grain = dynamic_cast<PASlider>(components[PID::grain]);
-    auto ratio = dynamic_cast<PASlider>(components[PID::ratio]);
+    auto hold = dynamic_cast<PAToggle>(components[PID::hold]);
+    hold->param.onStateChange = [&]() { set_stretch_params(); };
+    //auto ratio = dynamic_cast<PASlider>(components[PID::ratio]);
 
-    grain->param.onValueChange = [&]() {
-        audioProcessor.stretch_processor.set_grain(audioProcessor.apvts);
-        };
-
-    ratio->param.onValueChange = [&]() {
-        audioProcessor.stretch_processor.set_grain(audioProcessor.apvts);
-        };
 
     grain_text_bounds = StretchBounds(components[PID::grain]->get()->getBounds(), -20);
     ratio_text_bounds = StretchBounds(components[PID::ratio]->get()->getBounds(), -20);
@@ -95,6 +90,8 @@ void StretchAudioProcessorEditor::paint (juce::Graphics& g)
     draw_help(g);
 
     show_or_hide();
+
+    //draw_debug(g);
 
 }
 

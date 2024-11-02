@@ -25,6 +25,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     inline void setup();
+    inline void set_stretch_params() { audioProcessor.stretch_processor.set_params(audioProcessor.apvts); };
 
     void show_or_hide();
 
@@ -36,6 +37,7 @@ public:
     void set_scales();
     void draw_labels(juce::Graphics&g);
     void draw_help(juce::Graphics&g);
+    void draw_debug(juce::Graphics& g);
 
 private:
     // This reference is provided as a quick way for your editor to
