@@ -25,7 +25,6 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     inline void setup();
-    inline void set_stretch_params() { audioProcessor.stretch_processor.set_params(audioProcessor.apvts); };
 
     void show_or_hide();
 

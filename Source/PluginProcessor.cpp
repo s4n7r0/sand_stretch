@@ -95,7 +95,7 @@ void StretchAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
 {
     stretch_processor.num_channels = getNumInputChannels();
     stretch_processor.sample_rate = sampleRate;
-    stretch_processor.setup();
+    stretch_processor.setup(getNumInputChannels());
 }
 
 void StretchAudioProcessor::releaseResources()
@@ -144,10 +144,12 @@ void StretchAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
     //maybe passivelly fill the buffer?
     //eg fill buffer up to max grain_size * 2 and then increase limit if trigger is on
 
+
     if (trigger) {
+        stretch_processor.set_params(apvts);
         stretch_processor.fill_buffer(buffer);
         stretch_processor.process(buffer);
-    } else if (stretch_processor.buffer_is_dirty) stretch_processor.clear_buffer();
+    } else if (stretch_processor.buffer_is_dirty) stretch_processor.clear_buffer(getNumInputChannels());
 
 }
 

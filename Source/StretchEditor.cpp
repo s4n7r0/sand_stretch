@@ -74,6 +74,7 @@ void StretchAudioProcessorEditor::draw_help(juce::Graphics& g) {
 	}
 }
 
+
 void StretchAudioProcessorEditor::draw_debug(juce::Graphics& g) {
 
 	using namespace stretch;
@@ -83,9 +84,8 @@ void StretchAudioProcessorEditor::draw_debug(juce::Graphics& g) {
 	IRec debug_bound(25, 200, size_width, 25);
 
 	for (int i = 0; i < 5; ++i) {
-		debug_bound.setX(200 + 25 * i);
-		g.drawFittedText(audioProcessor.stretch_processor.debug_strings[i], debug_bound , juce::Justification::right, 1, 0);
+		debug_bound.setY(150 + 25 * i);
+		g.drawFittedText(audioProcessor.stretch_processor.debug_strings[i], debug_bound , juce::Justification::left, 1, 0);
 	}
-
 
 }

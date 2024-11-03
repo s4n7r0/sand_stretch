@@ -9,7 +9,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "StretchEditor.h"
-#include <Windows.h>
 
 using namespace stretch;
 //==============================================================================
@@ -50,14 +49,14 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
             slider->param.setNumDecimalPlacesToDisplay(num_decimal);
             slider->param.setTextBoxStyle(slider->param.getTextBoxPosition(), 1, 50, 25);
             slider->param.setRange(range, 0.01f);
-            slider->param.onValueChange = [&]() { set_stretch_params(); };
+            slider->param.onValueChange = [&]() { repaint(); };
         }
 
         addAndMakeVisible(components[i]->get(), 0);
     }
 
     auto hold = dynamic_cast<PAToggle>(components[PID::hold]);
-    hold->param.onStateChange = [&]() { set_stretch_params(); };
+    hold->param.onStateChange = [&]() { repaint(); };
     //auto ratio = dynamic_cast<PASlider>(components[PID::ratio]);
 
 
@@ -91,7 +90,7 @@ void StretchAudioProcessorEditor::paint (juce::Graphics& g)
 
     show_or_hide();
 
-    //draw_debug(g);
+    draw_debug(g);
 
 }
 

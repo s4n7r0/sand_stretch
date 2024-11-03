@@ -37,6 +37,8 @@ namespace stretch {
 		float size_ratio; 
 		bool holding;
 
+		int overhead; //how much samples we're over the samples in buffer
+
 		int buffer_size;
 		int samples_size;
 	};
@@ -44,58 +46,63 @@ namespace stretch {
 	class Grain {
 	public:
 		Grain() 
-			: grain_pos{ 0.f }, grain_size{ 16.f }, buffer_pos{ 0 },
-		      do_i_need_a_grain{ true }, cur_grain{} {}
+			: grain_pos{ 0.f }, grain_size{ 16.f }, offset_pos{ 0 },
+		      do_i_need_a_grain{ true }, cur_grain{} 
+		{
+		}
 
-		void insert_grain(const GrainInfo&, juce::Array<float>&);
+		void insert_grain(const GrainInfo&, juce::Array<float>&, juce::Array<juce::String>&);
 		void clear_grain(bool quick = true);
-		float get_next_sample(GrainInfo&, juce::Array<float>&);
+		float get_next_sample(GrainInfo&, juce::Array<float>&, juce::Array<juce::String>&);
 
 		void resize(int);
+		void send_debug_msg(const juce::String&, juce::Array<juce::String>&);
 
-
-		int buffer_pos; //from where should a grain read from buffer
+		int offset_pos; //if grain size is less than buffer size
+		float grain_pos; //index of current grain's sample
+		//bool can_i_send_dbg_pls{ false };
 	private:
 		// keep 25% of prev and next grain so we can easily crossfade
 		juce::Array<float> cur_grain;
 		
-		float grain_pos; //index of current grain's sample
 		float grain_size;
-		//float grain_ratio;
-		//float grain_size_ratio;
+		float grain_ratio;
+		float grain_size_ratio;
 		bool do_i_need_a_grain;
 	};
 
 	class Processor {
 	public:
 		Processor()
-			: sample_rate{ 44100.f }, buffer_size{ 0 },
-			num_channels{ 0 }, grain_info{ 16, 1, 16, false },
-			buffer_is_dirty{ true }, debug_strings({"", "", "", "", ""})
+			: buffer_size{ 0 }, num_channels{ 2 }, sample_rate{ 44100.f }, 
+			grain_info{ 16, 1, 16, false, 0},
+			buffer_is_dirty{ true }
 		{
-			debug_strings.resize(5);
 		}
 
 		void fill_buffer(juce::AudioBuffer<float>&);
-		void clear_buffer();
+		void clear_buffer(int);
 
 		void process(juce::AudioBuffer<float>&);
 		void set_params(APVTS&); // this might be stupid
-		void setup();
+		void setup(int);
 		
-		void send_debug_msg(juce::String&);
+		void send_debug_msg(const juce::String&);
+		void is_mismatched();
 
-		float sample_rate;
 		int num_channels;
+		float sample_rate;
+
 		std::vector<Grain> grains;
 		bool buffer_is_dirty;
 
 		juce::Array<juce::String> debug_strings;
+
 	private:
 		GrainInfo grain_info;
-
 		std::vector<juce::Array<float>> buffer;
 		int buffer_size;
+		bool mismatched{ false };
 
 	};
 
