@@ -18,6 +18,20 @@ void StretchAudioProcessorEditor::show_or_hide() {
 		components[i]->get()->setVisible(!help_state);
 	}
 
+	auto tempo_toggle = dynamic_cast<components::AttachedToggleButton*>(components[PARAMS_IDS::tempo_toggle]);
+
+	if (!help_state) {
+		if (tempo_toggle->param.getToggleState()) {
+			components[PARAMS_IDS::grain]->get()->setVisible(false);
+			components[PARAMS_IDS::tempo]->get()->setVisible(true);
+
+		}
+		else {
+			components[PARAMS_IDS::grain]->get()->setVisible(true);
+			components[PARAMS_IDS::tempo]->get()->setVisible(false);
+		}
+	}
+
 }
 
 void StretchAudioProcessorEditor::set_scales() {
@@ -34,7 +48,15 @@ void StretchAudioProcessorEditor::draw_labels(juce::Graphics& g) {
 	IRec temp_bounds = grain_text_bounds.bounds;
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
-	g.drawFittedText(juce::String("grain"), temp_bounds, juce::Justification::right, 4, 0);
+
+	auto tempo_toggle = dynamic_cast<components::AttachedToggleButton*>(components[PARAMS_IDS::tempo_toggle]);
+
+	if (tempo_toggle->param.getToggleState()) {
+		g.drawFittedText(juce::String("tempo"), temp_bounds, juce::Justification::right, 4, 0);
+	}
+	else {
+		g.drawFittedText(juce::String("grain"), temp_bounds, juce::Justification::right, 4, 0);
+	}
 
 	temp_bounds = ratio_text_bounds.bounds;
 	temp_bounds *= abs_scale;

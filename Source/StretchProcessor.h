@@ -37,7 +37,11 @@ namespace stretch {
 		float ratio;
 		float size_ratio; 
 
-		bool holding;
+		bool using_tempo;
+		float beat_duration; //in samples
+		float beat_fraction;
+
+		bool using_hold;
 		float hold_offset;
 
 		int buffer_size;
@@ -76,7 +80,7 @@ namespace stretch {
 		void clear_buffer(int);
 
 		void process(juce::AudioBuffer<float>&);
-		void set_params(APVTS&); // this might be stupid
+		void set_params(APVTS&, double bpm); // this might be stupid
 		void setup(int);
 		
 		void send_debug_msg(const juce::String&);

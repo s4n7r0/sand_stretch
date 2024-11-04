@@ -40,9 +40,11 @@ namespace stretch {
 	const IRec trigger_bounds({ 37, 10	   , 75, 25 });
 	const IRec hold_bounds	 ({ 37 + 75    , 10, 55, 25 });
 	const IRec offset_bounds ({ 112 + 55   , 10, 50, 25 });
+	const IRec tempo_toggle_bounds  ({ 167 + 50   , 10, 100, 25 });
 	const IRec reverse_bounds({ 25 + 75 * 2, 10, 75, 25 });
-	const IRec grain_bounds  ({ 25, 35, (int)(size_width / 1.25), 50 });
-	const IRec ratio_bounds  ({ 25, 35 + 50, (int)(size_width / 1.25), 50 });
+	const IRec grain_bounds  ({ 25, 45, (int)(size_width / 1.25), 50 });
+	const IRec tempo_bounds  ({ 25, 45, (int)(size_width / 1.25), 50 });
+	const IRec ratio_bounds  ({ 25, 45 + 50, (int)(size_width / 1.25), 50 });
 
 	//remember to update params header too
 	const std::vector<IRec> components_bounds{
@@ -50,8 +52,11 @@ namespace stretch {
 												trigger_bounds,
 												hold_bounds,
 												offset_bounds,
+												tempo_toggle_bounds,
 												grain_bounds,
+												tempo_bounds,
 												ratio_bounds
+
 	};
 
 	struct StretchBounds {

@@ -25,11 +25,11 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
             grains[channel].insert_sample(grain_info, channelData[sample], debug_strings);
         }
 
-        int limit = MAX_GRAIN_SIZE * 2;
-        if(grain_info.holding)
+        int limit = MAX_GRAIN_SIZE * 64; // we need a lot for tempo...
+        if(grain_info.using_hold)
             limit += grain_info.hold_offset;
 
-        //this might be an issue if holding...
+        //this might be an issue if using_hold...
         if (grains[channel].grain_offset >= limit) {
             grain_info.buffer_size -= MAX_GRAIN_SIZE;
             grains[channel].grain_buffer.removeRange(0, MAX_GRAIN_SIZE);
@@ -74,14 +74,24 @@ void Processor::process(juce::AudioBuffer<float>& output_buffer)
     is_mismatched();
 }
 
-void Processor::set_params(APVTS& apvts)
+void Processor::set_params(APVTS& apvts, double bpm)
 {
     grain_info.size = apvts.getRawParameterValue("grain")->load();
     grain_info.ratio = apvts.getRawParameterValue("ratio")->load();
     grain_info.size_ratio = std::roundf(grain_info.size / grain_info.ratio);
+    
+    grain_info.beat_duration = sample_rate * (60 / bpm); //60 s
+    grain_info.beat_fraction = apvts.getRawParameterValue("tempo")->load();
+    double temp = grain_info.beat_fraction;
+    grain_info.beat_fraction = grain_info.beat_duration / std::pow(2, MAX_TEMPO_SIZE - grain_info.beat_fraction);
+    //grain_info.beat_fraction = grain_info.beat_duration * (grain_info.beat_fraction / 16);
+    grain_info.beat_fraction *= 4;
+    send_debug_msg(String().formatted("1/%.0lf fraction in samples: %.0lf", std::pow(2, MAX_TEMPO_SIZE - temp), grain_info.beat_fraction));
+    //send_debug_msg(String().formatted("%.01f/16 fraction in samples: %.0lf", temp / 16, grain_info.beat_fraction));
     //grain_info.size_ratio = grain_info.size / grain_info.ratio;
 
-    grain_info.holding = (bool)apvts.getRawParameterValue("hold")->load();
+    grain_info.using_hold = (bool)apvts.getRawParameterValue("hold")->load();
+    grain_info.using_tempo = (bool)apvts.getRawParameterValue("tempo_toggle")->load();
     grain_info.hold_offset = apvts.getRawParameterValue("offset")->load();
 }
 
@@ -93,6 +103,7 @@ void Processor::send_debug_msg(const String& msg)
 
 void Processor::is_mismatched()
 {
+
     int grains_diff = grains[0].grain_offset - grains[1].grain_offset;
 
     if (grains_diff && !mismatched) {
@@ -118,19 +129,24 @@ float Grain::get_next_sample(GrainInfo& grain, Array<String>& dbg)
     float local_grain_offset = grain_offset;
 
     //if user moved samples too fast
-    if (!grain.holding && grain_index > grain.size) {
+    if (!grain.using_hold && grain_index > grain.size) {
         grain_offset += grain_index - grain.size;
     }
 
-    if (grain.holding) {
-        local_grain_size -= grain.size_ratio;
+    if (grain.using_hold) {
+        if (grain.using_tempo) {
+            local_grain_size = grain.beat_fraction;
+        } else {
+            local_grain_size -= grain.size_ratio;
+        }
+
         if(grain.buffer_size >= grain.size + MAX_HOLD_OFFSET)
             local_grain_offset += grain.hold_offset;
     }
 
     if (grain_index >= local_grain_size) {
 
-        if (!grain.holding) {
+        if (!grain.using_hold) {
             grain_offset += grain.size_ratio;
         }
 

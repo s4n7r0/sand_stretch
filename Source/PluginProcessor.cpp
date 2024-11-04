@@ -137,14 +137,12 @@ void StretchAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     bool trigger = (bool)*apvts.getRawParameterValue("trigger");
+        
+    double bpm = 120;
+    if (auto bpmFromHost = *getPlayHead()->getPosition()->getBpm())
+        bpm = bpmFromHost;
 
-    //for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-    //    buffer.clear (i, 0, buffer.getNumSamples());
-
-    //maybe passivelly fill the buffer?
-    //eg fill buffer up to max grain_size * 2 and then increase limit if trigger is on
-
-    stretch_processor.set_params(apvts);
+    stretch_processor.set_params(apvts, bpm);
 
     if (trigger) {
         stretch_processor.fill_buffer(buffer);

@@ -18,7 +18,9 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     new components::AttachedToggleButton(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::trigger]),
     new components::AttachedToggleButton(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::hold]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::offset]),
+    new components::AttachedToggleButton(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::tempo_toggle]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::grain]),
+    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::tempo]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::ratio])
     }
 {
@@ -49,6 +51,9 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
             slider->param.setNumDecimalPlacesToDisplay(num_decimal);
             slider->param.setTextBoxStyle(slider->param.getTextBoxPosition(), 1, 50, 25);
             slider->param.setRange(range, 0.01f);
+
+            if(i == PID::tempo) slider->param.setRange(range, 1);
+
             slider->param.onValueChange = [&]() { repaint(); };
         }
 
@@ -56,9 +61,12 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     }
 
     auto hold = dynamic_cast<PAToggle>(components[PID::hold]);
-    hold->param.onStateChange = [&]() { repaint(); };
-    //auto ratio = dynamic_cast<PASlider>(components[PID::ratio]);
+    hold->param.onStateChange = [&]() { repaint(); };    
 
+    auto tempo_toggle = dynamic_cast<PAToggle>(components[PID::tempo_toggle]);
+    tempo_toggle->param.setButtonText("Tempo");
+    tempo_toggle->param.onStateChange = [&]() { repaint(); };
+    //auto ratio = dynamic_cast<PASlider>(components[PID::ratio]);
 
     grain_text_bounds = StretchBounds(components[PID::grain]->get()->getBounds(), -20);
     ratio_text_bounds = StretchBounds(components[PID::ratio]->get()->getBounds(), -20);
@@ -110,6 +118,7 @@ void StretchAudioProcessorEditor::resized()
     components[PID::trigger]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
     components[PID::hold]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
     components[PID::offset]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
+    components[PID::tempo_toggle]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
 
     temp_bounds = help->original_bounds;
     help->param.setCentrePosition(0, 0);
