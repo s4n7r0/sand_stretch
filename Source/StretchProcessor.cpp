@@ -7,11 +7,6 @@ using namespace stretch;
 void Processor::setup(int num_channels) 
 {
     grains.resize(num_channels);
-    buffer.resize(num_channels);
-
-    //for (auto channel = 0; channel < num_channels; ++channel) {
-    //    grains[channel].resize(MAX_GRAIN_SIZE);
-    //}
 
     debug_strings.resize(5);
 
@@ -27,29 +22,10 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
 
         auto channelData = input_buffer.getReadPointer(channel);
 
-        buffer[channel].insertArray(-1, channelData, num_samples); // no need to have separate buffer for grain
-        //we can just use the main buffer in processing, which means that grain class might be useless
-
         for (int sample = 0; sample < num_samples; ++sample) {
-
-            grains[channel].insert_sample(grain_info, buffer[channel][sample+grain_info.buffer_size], debug_strings);
+            grains[channel].insert_sample(grain_info, channelData[sample], debug_strings);
 
             int samples_read = grains[channel].samples_read;
-
-        }
-        if (grains[channel].cur_grain.size() >= MAX_GRAIN_SIZE*2 ) {
-            float diff = grain_info.size_ratio / grain_info.size;
-            //grain_offset += size_ratio_diff; //something with size ratio, not diff
-            grains[channel].samples_read = 0;
-            grains[channel].cur_grain.removeRange(0, MAX_GRAIN_SIZE);
-            //grains[channel].grain_offset -= grains[channel].cur_grain.size();
-            grains[channel].grain_offset -= MAX_GRAIN_SIZE * diff;
-            if(grains[channel].grain_offset > MAX_GRAIN_SIZE) {
-                send_debug_msg(String().formatted("Woah too big! Compensating by this much: %.2f", -grains[channel].grain_offset));
-                grains[channel].grain_offset -= grains[channel].grain_offset;
-
-            }
-            //grains[channel].cur_grain.resize(MAX_GRAIN_SIZE);
         }
     }
 
@@ -71,8 +47,7 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
 void Processor::clear_buffer(int num_channels) {
 
     for (auto channel = 0; channel < num_channels; ++channel) {
-        buffer[channel].clear();
-        grains[channel].clear_grain(false);
+        grains[channel].clear_grain();
         grains[channel].buffer_offset = 0;
         grains[channel].grain_index = 0;
         grains[channel].grain_offset = 0;
@@ -90,35 +65,14 @@ void Processor::process(juce::AudioBuffer<float>& output_buffer)
     //not enough samples? do nothin
     if (grain_info.buffer_size < grain_info.size) return;
 
-    //for (auto channel = 0; channel < output_buffer.getNumChannels(); ++channel)
-    //{
-    auto* left = output_buffer.getWritePointer(0);
-    auto* right = output_buffer.getWritePointer(1);
-
-    int sample = 0;
-
-    //subtract newly added samples
-    //for (int channel = 0; channel < num_channels; ++channel) {
-    //    grains[channel].grain_index -= grain_info.samples_size;
-    //}
-
-    for (sample = 0; sample < grain_info.samples_size; ++sample) {
-        left[sample] = grains[0].get_next_sample(grain_info, sample, debug_strings);
-        right[sample] = grains[1].get_next_sample(grain_info, sample, debug_strings);
-        is_mismatched();
-        //int grains_diff = grains[0].buffer_pos - grain_info.buffer_size;
-        //send_debug_msg(String().formatted("gbp: %d bs: %d diff: %d", grains[0].buffer_pos, grain_info.buffer_size, grains_diff));
+    for (auto channel = 0; channel < output_buffer.getNumChannels(); ++channel)
+    {
+        for (int sample = 0; sample < grain_info.samples_size; ++sample) {
+            auto output = output_buffer.getWritePointer(channel);
+            output[sample] = grains[channel].get_next_sample(grain_info, sample, debug_strings);
+        }
     }
-
-    //store where we left off
-    //for (int channel = 0; channel < num_channels; ++channel) {
-    //    grains[channel].grain_offset += sample;
-    //}
-
-    //send_debug_msg(String().formatted("bufpos and bufsize diff: %d", grains[0].buffer_pos - grain_info.buffer_size));
-
-    //}
-
+    is_mismatched();
 }
 
 void Processor::set_params(APVTS& apvts)
@@ -127,8 +81,6 @@ void Processor::set_params(APVTS& apvts)
     grain_info.size = apvts.getRawParameterValue("grain")->load();
     grain_info.ratio = apvts.getRawParameterValue("ratio")->load();
     grain_info.size_ratio = std::roundf(grain_info.size / grain_info.ratio);
-
-    grain_info.overhead = jlimit<int>(0, MAX_GRAIN_SIZE - grain_info.samples_size, grain_info.size - grain_info.samples_size);
 
     for (int channel = 0; channel < num_channels; ++channel) {
         if (grains[channel].grain_offset < 0) 
@@ -147,33 +99,16 @@ void Processor::send_debug_msg(const String& msg)
 
 void Processor::is_mismatched()
 {
-    int grains_diff = grains[0].offset_pos - grains[1].offset_pos;
+    int grains_diff = grains[0].grain_offset - grains[1].grain_offset;
 
     if (grains_diff && !mismatched) {
-        send_debug_msg(String().formatted("desync, g[0]bufpos: %d, g[1]bufpos: %d", grains[0].offset_pos, grains[1].offset_pos));
-        send_debug_msg(String().formatted("grainpos diff [0] - [1]: %d", grains[0].grain_pos - grains[1].grain_pos));
+        send_debug_msg(String().formatted("desync, g[0]offset: %d, g[1]offset: %d", grains[0].grain_offset, grains[1].grain_offset));
+        send_debug_msg(String().formatted("offset diff [0] - [1]: %d", grains[0].grain_offset - grains[1].grain_offset));
         mismatched = true;
     }
 }
 
 // GRAIN
-
-void Grain::insert_grain(const GrainInfo& grain, Array<float>& buffer, Array<String>& dbg)
-{
-
-    do_i_need_a_grain = false;
-
-    int max_samples = grain.samples_size + grain.overhead;
-
-    //int buf_diff = jlimit<int>(0, MAX_GRAIN_SIZE - grain.samples_size, grain_offset - grain.samples_size);
-
-    for (int i = 0; i < max_samples; ++i) {
-        samples_read += 1;
-        float sample = *(buffer.getRawDataPointer() + (grain.buffer_size - max_samples) + i);
-
-        cur_grain.add(sample);
-    }
-}
 
 void Grain::insert_sample(const GrainInfo& grain, float sample, juce::Array<juce::String>& dbg)
 {
@@ -181,33 +116,17 @@ void Grain::insert_sample(const GrainInfo& grain, float sample, juce::Array<juce
     samples_read += 1;
 }
 
-void Grain::clear_grain(bool quick) 
+void Grain::clear_grain() 
 {
-    if (quick) {
-        cur_grain.clearQuick();
-    }
-    else { //we clearing it all
-        offset_pos = 0;
-        cur_grain.resize(0);
-        cur_grain.clear();
-    }
+    cur_grain.resize(0);
+    cur_grain.clear();
 }
 
 float Grain::get_next_sample(GrainInfo& grain, float index, Array<String>& dbg) 
 {
 
-    //int limit = jlimit<int>(16, 256, grain.size_ratio);
-    int size_ratio_diff = grain.size - grain.size_ratio;
-
-    grain_size = grain.size;
-    grain_ratio = grain.ratio;
-    grain_size_ratio = grain.size_ratio;
-
-    if (grain_index >= grain_size) {
-        //grain_offset += size_ratio_diff; //something with size ratio, not diff
-        //float diff = grain_size_ratio / grain_size;
-        //grain_offset += grain_size * diff;
-        grain_offset += grain_size_ratio;
+    if (grain_index >= grain.size) {
+        grain_offset += grain.size_ratio;
         grain_index = 0;
     }
 
@@ -215,20 +134,8 @@ float Grain::get_next_sample(GrainInfo& grain, float index, Array<String>& dbg)
         grain_offset += -grain_offset;
         if (grain_offset < 0)
             send_debug_msg(String().formatted("I need this much to compensate: %.2f", -grain_offset ), dbg);
-        //grain_pos -= grain_pos - grain_size;
     }
-    //int buf_diff = jlimit<int>(0, MAX_GRAIN_SIZE - grain.samples_size, grain_offset - grain.samples_size);
 
-    //if (grain_offset + grain_pos >= grain.samples_size + grain.overhead) {
-    //    grain_offset = 0;
-    //    //insert_grain(grain, buffer, dbg);
-    //    do_i_need_a_grain = true;
-    //    //return get_next_sample(grain, buffer, dbg);
-    //}
-
-    //int sample = -grain.size + grain_index;
-
-    //index is process's for loop ( -grain_info.size + sample) where
     return cur_grain[grain_index++ + grain_offset];
 
 }
