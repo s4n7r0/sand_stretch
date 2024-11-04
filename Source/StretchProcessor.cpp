@@ -22,10 +22,6 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
 
     int num_samples = input_buffer.getNumSamples();
     int num_channels = input_buffer.getNumChannels();
-
-    buffer_is_dirty = true;
-    grain_info.buffer_size += num_samples;
-    grain_info.samples_size = num_samples;
     
     for (int channel = 0; channel < num_channels; ++channel) {
 
@@ -34,18 +30,23 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
         buffer[channel].insertArray(-1, channelData, num_samples);
 
         for (int sample = 0; sample < num_samples; ++sample) {
-            float a = buffer[channel][sample];
-            grains[channel].insert_sample(grain_info, buffer[channel][sample], debug_strings);
+
+            grains[channel].insert_sample(grain_info, buffer[channel][sample+grain_info.buffer_size], debug_strings);
 
             int samples_read = grains[channel].samples_read;
 
-            if (grains[channel].cur_grain.size() >= MAX_GRAIN_SIZE) {
+            if (grains[channel].cur_grain.size() >= MAX_GRAIN_SIZE*2 ) {
                 grains[channel].samples_read = 0;
-                grains[channel].cur_grain.removeRange(0, num_samples);
+                grains[channel].cur_grain.removeRange(0, MAX_GRAIN_SIZE);
+                grains[channel].grain_index -= MAX_GRAIN_SIZE;
+                //grains[channel].cur_grain.resize(MAX_GRAIN_SIZE);
             }
         }
-
     }
+
+    buffer_is_dirty = true;
+    grain_info.buffer_size += num_samples;
+    grain_info.samples_size = num_samples;
 
     //clear buffer based on how far current grain is into the buffer
     //since we cant go back
@@ -65,6 +66,9 @@ void Processor::clear_buffer(int num_channels) {
         grains[channel].clear_grain(false);
         grains[channel].resize(grain_info.size);
         grains[channel].buffer_offset = 0;
+        grains[channel].grain_index = 0;
+        grains[channel].grain_offset = 0;
+        grains[channel].samples_read = 0;
     }
 
     mismatched = false;
@@ -86,9 +90,9 @@ void Processor::process(juce::AudioBuffer<float>& output_buffer)
     int sample = 0;
 
     //subtract newly added samples
-    for (int channel = 0; channel < num_channels; ++channel) {
-        grains[channel].grain_index -= grain_info.samples_size;
-    }
+    //for (int channel = 0; channel < num_channels; ++channel) {
+    //    grains[channel].grain_index -= grain_info.samples_size;
+    //}
 
     for (sample = 0; sample < grain_info.samples_size; ++sample) {
         left[sample] = grains[0].get_next_sample(grain_info, sample, debug_strings);
@@ -99,9 +103,9 @@ void Processor::process(juce::AudioBuffer<float>& output_buffer)
     }
 
     //store where we left off
-    for (int channel = 0; channel < num_channels; ++channel) {
-        grains[channel].grain_offset += sample;
-    }
+    //for (int channel = 0; channel < num_channels; ++channel) {
+    //    grains[channel].grain_offset += sample;
+    //}
 
     //send_debug_msg(String().formatted("bufpos and bufsize diff: %d", grains[0].buffer_pos - grain_info.buffer_size));
 
@@ -171,6 +175,7 @@ void Grain::clear_grain(bool quick)
     }
     else { //we clearing it all
         offset_pos = 0;
+        cur_grain.resize(0);
         cur_grain.clear();
     }
 }
@@ -184,7 +189,9 @@ float Grain::get_next_sample(GrainInfo& grain, float index, Array<String>& dbg)
     grain_size = grain.size;
     grain_ratio = grain.ratio;
     grain_size_ratio = grain.size_ratio;
-    grain_index += 1;
+
+    if (grain_index >= grain_size)
+        grain_offset += size_ratio_diff;
 
     if ((int)std::roundf(grain_size_ratio) > grain.samples_size) {
         //send_debug_msg(String().formatted("Heyy that's too big!: gsr: %.2f, ss: %.2f", grain_size_ratio, grain.samples_size), dbg);
@@ -204,13 +211,12 @@ float Grain::get_next_sample(GrainInfo& grain, float index, Array<String>& dbg)
     //    //return get_next_sample(grain, buffer, dbg);
     //}
 
-    if (grain_index >= grain_size_ratio)
-        grain_index -= size_ratio_diff;
+
 
     //int sample = -grain.size + grain_index;
 
     //index is process's for loop ( -grain_info.size + sample) where
-    return cur_grain[cur_grain.size() + grain_index];
+    return cur_grain[grain_index++ - grain_offset];
 
 }
 
