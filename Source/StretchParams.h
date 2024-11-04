@@ -1,6 +1,6 @@
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
-
+//#define DBLUE_COMPATIBILITY
 //thank you Beats Basteln
 //copied from napalm, kinda lazy
 namespace stretch
@@ -8,13 +8,23 @@ namespace stretch
 
 	const float size_width = 400;
 	const float size_height = 200;
+	const int MAX_SAMPLES_IN_BUFFER = 44100 * 100000 / 44100; // more than a day at 44100HZ, 6 hours on 192000 :sob:
 
-	const int MAX_GRAIN_SIZE = 4096 * 4; //adding one so it doesn't click when range is set to max
-	const int MAX_SAMPLES_IN_BUFFER = MAX_GRAIN_SIZE * 32; // (2 << 16) + 4
+	#ifdef DBLUE_COMPATIBILITY
+	const int MIN_GRAIN_SIZE = 128;	
+	const int MAX_GRAIN_SIZE = 10000;
+	#else
 	const int MIN_GRAIN_SIZE = 16;
+	const int MAX_GRAIN_SIZE = 4096 * 4;
+	#endif
 
-	const float MAX_RATIO = 12.f;
-	const float MIN_RATIO = 1.f;
+	#ifdef DBLUE_COMPATIBILITY
+		const float MIN_RATIO = 1.f;	
+		const float MAX_RATIO = 11.f;
+	#else
+		const float MIN_RATIO = 1.f;
+		const float MAX_RATIO = 12.f;
+	#endif
 
 	const float MAX_HOLD_OFFSET = 4096; //maybe add + 1 later on
 

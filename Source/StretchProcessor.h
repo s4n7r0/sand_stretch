@@ -36,7 +36,9 @@ namespace stretch {
 		float size;
 		float ratio;
 		float size_ratio; 
+
 		bool holding;
+		float hold_offset;
 
 		int buffer_size;
 	};
@@ -54,7 +56,7 @@ namespace stretch {
 		void send_debug_msg(const juce::String&, juce::Array<juce::String>&);
 
 		float grain_offset;
-		int grain_index;
+		float grain_index;
 
 		juce::Array<float> grain_buffer;
 	private:
@@ -65,7 +67,7 @@ namespace stretch {
 	public:
 		Processor()
 			: buffer_size{ 0 }, num_channels{ 2 }, sample_rate{ 44100.f }, 
-			grain_info{ 16, 1, 16, false},
+			grain_info{ 16, 1, 16, false, 0},
 			buffer_is_dirty{ true }
 		{
 		}

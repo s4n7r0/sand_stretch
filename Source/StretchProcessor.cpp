@@ -25,20 +25,23 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
             grains[channel].insert_sample(grain_info, channelData[sample], debug_strings);
         }
 
-        if (grains[channel].grain_offset >= MAX_GRAIN_SIZE * 2) {
+        int limit = MAX_GRAIN_SIZE * 2;
+        if(grain_info.holding)
+            limit += grain_info.hold_offset;
+
+        //this might be an issue if holding...
+        if (grains[channel].grain_offset >= limit) {
+            grain_info.buffer_size -= MAX_GRAIN_SIZE;
             grains[channel].grain_buffer.removeRange(0, MAX_GRAIN_SIZE);
             grains[channel].grain_offset -= MAX_GRAIN_SIZE;
-            send_debug_msg(String().formatted("Removed that bitch, new size: %d", grains[channel].grain_buffer.size()));
+                if(channel == num_channels - 1) 
+                    send_debug_msg(String().formatted("new size: %d", grains[channel].grain_buffer.size()));
         }
 
     }
 
     buffer_is_dirty = true;
     grain_info.buffer_size += num_samples;
-
-    //clear buffer based on how far current grain is into the buffer
-    //since we cant go back
-
 
 }
 
@@ -76,8 +79,10 @@ void Processor::set_params(APVTS& apvts)
     grain_info.size = apvts.getRawParameterValue("grain")->load();
     grain_info.ratio = apvts.getRawParameterValue("ratio")->load();
     grain_info.size_ratio = std::roundf(grain_info.size / grain_info.ratio);
+    //grain_info.size_ratio = grain_info.size / grain_info.ratio;
 
     grain_info.holding = (bool)apvts.getRawParameterValue("hold")->load();
+    grain_info.hold_offset = apvts.getRawParameterValue("offset")->load();
 }
 
 void Processor::send_debug_msg(const String& msg)
@@ -109,17 +114,30 @@ void Grain::clear_grain()
 float Grain::get_next_sample(GrainInfo& grain, Array<String>& dbg) 
 {
 
+    float local_grain_size = grain.size;
+    float local_grain_offset = grain_offset;
+
     //if user moved samples too fast
-    if (grain_index > grain.size) {
+    if (!grain.holding && grain_index > grain.size) {
         grain_offset += grain_index - grain.size;
     }
 
-    if (grain_index >= grain.size) {
-        grain_offset += grain.size_ratio;
+    if (grain.holding) {
+        local_grain_size -= grain.size_ratio;
+        if(grain.buffer_size >= grain.size + MAX_HOLD_OFFSET)
+            local_grain_offset += grain.hold_offset;
+    }
+
+    if (grain_index >= local_grain_size) {
+
+        if (!grain.holding) {
+            grain_offset += grain.size_ratio;
+        }
+
         grain_index = 0;
     }
 
-    return grain_buffer[grain_index++ + grain_offset];
+    return grain_buffer[local_grain_offset + grain_index++];
 }
 
 void Grain::insert_sample(const GrainInfo& grain, float sample, juce::Array<juce::String>& dbg)
