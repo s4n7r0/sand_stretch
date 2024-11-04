@@ -31,9 +31,10 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
 
         auto channelData = input_buffer.getReadPointer(channel);
 
-        buffer[channel].addArray(channelData[channel], num_samples);
+        buffer[channel].insertArray(-1, channelData, num_samples);
 
         for (int sample = 0; sample < num_samples; ++sample) {
+            float a = buffer[channel][sample];
             grains[channel].insert_sample(grain_info, buffer[channel][sample], debug_strings);
 
             int samples_read = grains[channel].samples_read;
