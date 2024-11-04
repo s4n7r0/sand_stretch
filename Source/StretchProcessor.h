@@ -52,23 +52,29 @@ namespace stretch {
 		}
 
 		void insert_grain(const GrainInfo&, juce::Array<float>&, juce::Array<juce::String>&);
+		void insert_sample(const GrainInfo&, float, juce::Array<juce::String>&);
 		void clear_grain(bool quick = true);
-		float get_next_sample(GrainInfo&, juce::Array<float>&, juce::Array<juce::String>&);
+		float get_next_sample(GrainInfo&, float, juce::Array<juce::String>&);
 
 		void resize(int);
 		void send_debug_msg(const juce::String&, juce::Array<juce::String>&);
 
 		int offset_pos; //if grain size is less than buffer size
-		float grain_pos; //index of current grain's sample
+		float grain_pos{ 0.f }; //index of current grain's sample
+		float grain_offset{ 0 };
+		int buffer_offset{ 0 };
 		//bool can_i_send_dbg_pls{ false };
+		int samples_read{ 0 };
+		int grain_index{ 0 };
+		juce::Array<float> cur_grain;
 	private:
 		// keep 25% of prev and next grain so we can easily crossfade
-		juce::Array<float> cur_grain;
 		
 		float grain_size;
 		float grain_ratio;
 		float grain_size_ratio;
 		bool do_i_need_a_grain;
+
 	};
 
 	class Processor {
