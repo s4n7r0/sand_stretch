@@ -3,7 +3,7 @@
 //Things to improve upon from first version of sand_stretch:
 /*
 Remove buffersize and instead delete previously used samples which 
-can't be reached anymore.
+can't be reached anymore. - DONE
 Smooth up the sliders so it doesn't click.
 Design good and fast declicking and crossfading algorithms.
 	This means, 
@@ -19,11 +19,12 @@ Design good and fast declicking and crossfading algorithms.
 	+ Instead it would be better to look a bit into the future somehow, and if crossfade is at 25%
 	+ and ratio would make it difficult to crossfade, clamp samples so it still gets crossfaded.
 GUI in the style of napalm. - done
-Don't use pointers to the buffer, and instead hold the current grain in an array.
+Don't use pointers to the buffer, and instead hold the current grain in an array. - DONE
 Add a tempo option, grain size gets replaced by tempo measure
 
 optionally:
-Make sure it sounds the same as the old version.
+Make sure it sounds the same as the old version. - HELL NAW
+Make it sound like og dblue_stretch
 
 */
 
@@ -37,46 +38,34 @@ namespace stretch {
 		float size_ratio; 
 		bool holding;
 
-		int overhead; //how much samples we're over the samples in buffer
-
 		int buffer_size;
-		int samples_size;
 	};
 
 	class Grain {
 	public:
-		Grain() 
-			: grain_pos{ 0.f }, grain_size{ 16.f }, offset_pos{ 0 },
-		      cur_grain{} 
-		{
-		}
+		Grain() : grain_offset{ 0 }, grain_index{ 0 } {}
 
 		void insert_sample(const GrainInfo&, float, juce::Array<juce::String>&);
-		void clear_grain();
-		float get_next_sample(GrainInfo&, float, juce::Array<juce::String>&);
+		float get_next_sample(GrainInfo&, juce::Array<juce::String>&);
 
+		void clear_grain();
 		void resize(int);
+
 		void send_debug_msg(const juce::String&, juce::Array<juce::String>&);
 
-		int offset_pos; //if grain size is less than buffer size
-		float grain_pos{ 0.f }; //index of current grain's sample
-		float grain_offset{ 0 };
-		int buffer_offset{ 0 };
+		float grain_offset;
+		int grain_index;
 
-		int samples_read{ 0 };
-		int grain_index{ 0 };
-		juce::Array<float> cur_grain;
+		juce::Array<float> grain_buffer;
 	private:
-		float grain_size;
-		float grain_ratio;
-		float grain_size_ratio;
+
 	};
 
 	class Processor {
 	public:
 		Processor()
 			: buffer_size{ 0 }, num_channels{ 2 }, sample_rate{ 44100.f }, 
-			grain_info{ 16, 1, 16, false, 0},
+			grain_info{ 16, 1, 16, false},
 			buffer_is_dirty{ true }
 		{
 		}
@@ -101,6 +90,7 @@ namespace stretch {
 
 	private:
 		GrainInfo grain_info;
+
 		int buffer_size;
 		bool mismatched{ false };
 
