@@ -35,7 +35,6 @@ namespace stretch {
 	struct GrainInfo {
 		float size;
 		float ratio;
-		float size_ratio; 
 
 		bool using_tempo;
 		float beat_duration; //in samples
@@ -44,6 +43,8 @@ namespace stretch {
 
 		bool using_hold;
 		float hold_offset;
+
+		juce::Array<int> zcross_samples; //indexes where samples crossed 0
 
 		int buffer_size;
 	};
@@ -55,6 +56,7 @@ namespace stretch {
 		void insert_sample(const GrainInfo&, float, juce::Array<juce::String>&);
 		float get_next_sample(const GrainInfo&, juce::Array<juce::String>&);
 		float declick(const GrainInfo&, juce::Array<juce::String>&);
+		int get_zcross_bounds(const GrainInfo&, juce::Array<juce::String>&);
 
 		void clear_grain();
 		void resize(int);
@@ -72,20 +74,21 @@ namespace stretch {
 		int declick_count;
 		float declick_sum;
 		float declick_prev_sample;
-
 	};
 
 	class Processor {
 	public:
 		Processor()
 			: buffer_size{ 0 }, num_channels{ 2 }, sample_rate{ 44100.f }, 
-			grain_info{ 16, 1, 16, false, 0},
+			grain_info{ 16, 1, false, 0},
 			buffer_is_dirty{ true }
 		{
 		}
 
 		void fill_buffer(juce::AudioBuffer<float>&);
 		void clear_buffer(int);
+
+		void zcross(juce::AudioBuffer<float>&);
 
 		void process(juce::AudioBuffer<float>&);
 		void set_params(APVTS&, double bpm); // this might be stupid
@@ -107,6 +110,7 @@ namespace stretch {
 
 		int buffer_size;
 		bool mismatched{ false };
+		ZCROSS_STATE cur_zcross_state{ NONE };
 
 	};
 

@@ -17,6 +17,8 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
     int num_samples = input_buffer.getNumSamples();
     int num_channels = input_buffer.getNumChannels();
     
+    zcross(input_buffer);
+
     for (int channel = 0; channel < num_channels; ++channel) {
 
         auto channelData = input_buffer.getReadPointer(channel);
@@ -45,6 +47,44 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
 
 }
 
+void Processor::zcross(juce::AudioBuffer<float>& input_buffer) {
+
+    int num_samples = input_buffer.getNumSamples();
+    int num_channels = input_buffer.getNumChannels();
+    //static int zcross_index = 0;
+
+    float summed_sample = 0;
+
+    for (int sample = 0; sample < num_samples; ++sample) {
+
+        for (int channel = 0; channel < num_channels; ++channel) {
+            auto channelData = input_buffer.getReadPointer(channel);
+            summed_sample += channelData[sample];
+        }
+
+        summed_sample /= num_channels;
+
+        if (cur_zcross_state == ZCROSS_STATE::NONE) {
+            //zcross_index = 0;
+            if (summed_sample > 0) cur_zcross_state = ZCROSS_STATE::ABOVE;
+            if (summed_sample < 0) cur_zcross_state = ZCROSS_STATE::BELOW;
+        }
+
+        if (summed_sample > 0 && cur_zcross_state == ZCROSS_STATE::BELOW) {
+            grain_info.zcross_samples.add(grain_info.buffer_size + sample);
+            cur_zcross_state = ZCROSS_STATE::ABOVE;
+            send_debug_msg(String().formatted("ayy we got a zcross index at: %d", grain_info.buffer_size + sample));
+        }        
+        
+        if (summed_sample < 0 && cur_zcross_state == ZCROSS_STATE::ABOVE) {
+            grain_info.zcross_samples.add(grain_info.buffer_size + sample);
+            cur_zcross_state = ZCROSS_STATE::BELOW;
+            send_debug_msg(String().formatted("ayy we got a zcross index at: %d", grain_info.buffer_size + sample));
+        }
+
+    }
+}
+
 void Processor::clear_buffer(int num_channels) {
 
     for (auto channel = 0; channel < num_channels; ++channel) {
@@ -52,6 +92,8 @@ void Processor::clear_buffer(int num_channels) {
     }
 
     mismatched = false;
+
+    grain_info.zcross_samples.clear();
 
     grain_info.buffer_size = 0;
     buffer_is_dirty = false;
@@ -62,18 +104,16 @@ void Processor::process(juce::AudioBuffer<float>& output_buffer)
     //we will get enough samples either way.
     //if (grain_info.buffer_size < grain_info.size) return;
 
-    for (auto channel = 0; channel < output_buffer.getNumChannels()-1; ++channel)
+    for (auto channel = 0; channel < output_buffer.getNumChannels(); ++channel)
     {
-        auto outputl = output_buffer.getWritePointer(0);
-        auto outputr = output_buffer.getWritePointer(1);
+        auto output = output_buffer.getWritePointer(channel);
 
         for (int sample = 0; sample < output_buffer.getNumSamples(); ++sample) {
-            outputl[sample] = grains[0].get_next_sample(grain_info, debug_strings);
-            outputr[sample] = grains[1].get_next_sample(grain_info, debug_strings);
-            is_mismatched();
+            output[sample] = grains[channel].get_next_sample(grain_info, debug_strings);
         }
 
     }
+    is_mismatched();
 
 }
 
@@ -86,14 +126,10 @@ void Processor::set_params(APVTS& apvts, double bpm)
 
     grain_info.size = apvts.getRawParameterValue("grain")->load();
     grain_info.ratio = apvts.getRawParameterValue("ratio")->load();
-    grain_info.size_ratio = grain_info.size / grain_info.ratio;
     
-    double subdivision = 1;
     int beat_subdivision = (int)apvts.getRawParameterValue("subd")->load();
-    char dbg_subd_str = 'n';
     grain_info.beat_duration = sample_rate * (60 / bpm); //60 s
     grain_info.beat_fraction = apvts.getRawParameterValue("tempo")->load();
-    double temp = grain_info.beat_fraction;
     grain_info.beat_fraction = grain_info.beat_duration / std::pow(2, MAX_TEMPO_SIZE - grain_info.beat_fraction);
     grain_info.beat_fraction *= 4;
 
@@ -101,20 +137,14 @@ void Processor::set_params(APVTS& apvts, double bpm)
         if (grain_info.using_tempo) {
             if (beat_subdivision == 1) { //if triplets
                 grain_info.beat_fraction *= 1.33333f; //should be accurate enough
-                dbg_subd_str = 't';
             }
             else if (beat_subdivision == 2) { //if dotted 
                 grain_info.beat_fraction *= 1.5f;
-                dbg_subd_str = 'd';
             }
         }
     }
 
-    //grain_info.beat_fraction = grain_info.beat_duration * (grain_info.beat_fraction / 16);
     grain_info.beat_ratio = grain_info.beat_fraction / grain_info.ratio;
-    //send_debug_msg(String().formatted("1/%.0lf %c fraction in samples: %.0lf", std::pow(2, MAX_TEMPO_SIZE - temp), dbg_subd_str, grain_info.beat_fraction));
-    //send_debug_msg(String().formatted("%.01f/16 fraction in samples: %.0lf", temp / 16, grain_info.beat_fraction));
-    //grain_info.size_ratio = grain_info.size / grain_info.ratio;
 }
 
 void Processor::send_debug_msg(const String& msg)
@@ -156,7 +186,7 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
 
     local_grain_size = grain.size;
     local_grain_offset = grain_offset;
-    local_grain_ratio = grain.size_ratio;
+    local_grain_ratio = grain.size / grain.ratio;
 
     if (grain.using_tempo) {
         local_grain_size = grain.beat_fraction;
@@ -166,8 +196,6 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
     //if user moved samples too fast
     if (!grain.using_hold && grain_index > local_grain_size) {
         grain_offset += grain_index - local_grain_size;
-        send_debug_msg(String().formatted("hehe"), dbg);
-
     }
 
     //adjust grain size depending on ratio
@@ -184,8 +212,8 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
 
     float sample = grain_buffer[local_grain_offset + grain_index];
 
-    // * 2 to make sure we have enough samples to calculate the sum from
     bool is_index_in_declick_range = (grain_index > local_grain_size - DECLICK_WINDOW / 2 || grain_index < DECLICK_WINDOW / 2);
+
     //make sure there are enough samples to declick
     //figure out a way to check if ratio is greater than some size and make it work below 2 ratio
     if (local_grain_ratio <= local_grain_size - DECLICK_WINDOW / 2 && grain_offset >= DECLICK_WINDOW * 2 && is_index_in_declick_range) {
@@ -259,6 +287,10 @@ float Grain::declick(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
     }
 
     return sample;
+}
+
+int Grain::get_zcross_bounds(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
+    return 0;
 }
 
 void Grain::insert_sample(const GrainInfo& grain, float sample, juce::Array<juce::String>& dbg)

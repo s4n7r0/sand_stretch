@@ -22,14 +22,16 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::grain]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::tempo]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::ratio]),
-    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::subd])
+    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::subd]),
+    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::zwindow]),
+    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::zoffset])
     }
 {
     using PID = PARAMS_IDS;
     using PASlider = AttachedSlider*;
     using PAToggle = AttachedToggleButton*;
 
-    setSize (400, 300);
+    setSize (400, 500);
     setup();
 
     components[PID::help]->get()->setColour(1, colours::component_background);
@@ -44,7 +46,7 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     for (int i = PID::help; i < PID::end; ++i) {
         components[i]->set_bounds(components_bounds[i]);
 
-        if (i >= PID::grain && i <= PID::subd) {
+        if (i >= PID::grain && i < PID::end) {
             juce::Range<double> range({ range_vector[i].getStart(), range_vector[i].getEnd() });
             PASlider slider = dynamic_cast<PASlider>(components[i]);
 
@@ -75,6 +77,8 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
 
     grain_text_bounds = StretchBounds(components[PID::grain]->get()->getBounds(), -20);
     ratio_text_bounds = StretchBounds(components[PID::ratio]->get()->getBounds(), -20);
+    zwindow_text_bounds = StretchBounds(components[PID::zwindow]->get()->getBounds(), -20);
+    zoffset_text_bounds = StretchBounds(components[PID::zoffset]->get()->getBounds(), -20);
 
     resized();
 
