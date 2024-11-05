@@ -18,21 +18,42 @@ void StretchAudioProcessorEditor::show_or_hide() {
 		components[i]->get()->setVisible(!help_state);
 	}
 
-	auto tempo_toggle = dynamic_cast<components::AttachedToggleButton*>(components[PARAMS_IDS::tempo_toggle]);
+	auto using_tempo = dynamic_cast<components::AttachedToggleButton*>(components[PARAMS_IDS::tempo_toggle]);
+	auto using_hold = (bool)audioProcessor.apvts.getRawParameterValue(PARAMS_STRING_IDS[PARAMS_IDS::hold])->load();
+	auto grain_comp = components[PARAMS_IDS::grain]->get();
+	auto tempo_comp = components[PARAMS_IDS::tempo]->get();
+	auto ratio_comp = components[PARAMS_IDS::ratio]->get();
+	auto subd_comp = components[PARAMS_IDS::subd]->get();
 
+	//ik this is ugly but works
 	if (!help_state) {
-		if (tempo_toggle->param.getToggleState()) {
-			components[PARAMS_IDS::grain]->get()->setVisible(false);
-			components[PARAMS_IDS::ratio]->get()->setVisible(false);
-			components[PARAMS_IDS::tempo]->get()->setVisible(true);
-			components[PARAMS_IDS::subd]->get()->setVisible(true);
-
+		if (using_hold) {
+			if (using_tempo->param.getToggleState()) {
+				grain_comp->setVisible(false);
+				tempo_comp->setVisible(true);
+				ratio_comp->setVisible(false);
+				subd_comp->setVisible(true);
+			}
+			else {
+				grain_comp->setVisible(true);
+				tempo_comp->setVisible(false);
+				ratio_comp->setVisible(true);
+				subd_comp->setVisible(false);
+			}
 		}
 		else {
-			components[PARAMS_IDS::grain]->get()->setVisible(true);
-			components[PARAMS_IDS::ratio]->get()->setVisible(true);
-			components[PARAMS_IDS::tempo]->get()->setVisible(false);
-			components[PARAMS_IDS::subd]->get()->setVisible(false);
+			if (using_tempo->param.getToggleState()) {
+				grain_comp->setVisible(false);
+				tempo_comp->setVisible(true);
+				ratio_comp->setVisible(true);
+				subd_comp->setVisible(false);
+			}
+			else {
+				grain_comp->setVisible(true);
+				tempo_comp->setVisible(false);
+				ratio_comp->setVisible(true);
+				subd_comp->setVisible(false);
+			}
 		}
 	}
 
@@ -49,14 +70,24 @@ void StretchAudioProcessorEditor::draw_labels(juce::Graphics& g) {
 
 	using namespace stretch;
 
+	auto tempo_toggle = dynamic_cast<components::AttachedToggleButton*>(components[PARAMS_IDS::tempo_toggle]);
+	auto using_hold = (bool)audioProcessor.apvts.getRawParameterValue(PARAMS_STRING_IDS[PARAMS_IDS::hold])->load();
+
 	IRec temp_bounds = grain_text_bounds.bounds;
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
 
-	auto tempo_toggle = dynamic_cast<components::AttachedToggleButton*>(components[PARAMS_IDS::tempo_toggle]);
+	IRec tempo_bounds = IRec({ 25, 45, 50, 50 }) *= abs_scale;
+	auto tempo_comp = dynamic_cast<components::AttachedSlider*>(components[PARAMS_IDS::tempo]);
+	float tempo_val = tempo_comp->param.getValue();
+
+	String tempo_text(String().formatted("1/%.f", std::pow(2, MAX_TEMPO_SIZE - tempo_val)));
 
 	if (tempo_toggle->param.getToggleState()) {
 		g.drawFittedText(juce::String("tempo"), temp_bounds, juce::Justification::right, 4, 0);
+		set_font_size(g, 13 * abs_scale);
+		g.drawFittedText(tempo_text, tempo_bounds, juce::Justification::centred, 1, 1.f);
+		set_font_size(g, 15 * abs_scale);
 	}
 	else {
 		g.drawFittedText(juce::String("grain"), temp_bounds, juce::Justification::right, 4, 0);
@@ -66,14 +97,31 @@ void StretchAudioProcessorEditor::draw_labels(juce::Graphics& g) {
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
 
+	IRec subdivision_bounds = IRec({ 10, 45 + 50, 65, 50 }) *= abs_scale;
+	auto subdivision_comp = dynamic_cast<components::AttachedSlider*>(components[PARAMS_IDS::subd]);
+	float subdivision_val = subdivision_comp->param.getValue();
+
+	String subdivision_text("");
+	if (subdivision_val == 1) subdivision_text = "triplet";
+	else if (subdivision_val == 2) subdivision_text = "dotted";
+
 	if (tempo_toggle->param.getToggleState()) {
-		g.drawFittedText(juce::String("subdivision"), temp_bounds, juce::Justification::right, 4, 0);
+		if (using_hold) {
+			g.drawFittedText(juce::String("subdivision"), temp_bounds, juce::Justification::right, 4, 0);
+			set_font_size(g, 13 * abs_scale);
+			g.drawFittedText(subdivision_text, subdivision_bounds, juce::Justification::centred, 1, 1.f);
+			set_font_size(g, 15 * abs_scale);
+		}
+		else {
+			g.drawFittedText(juce::String("ratio"), temp_bounds, juce::Justification::right, 4, 0);
+		}
 	}
 	else {
 		g.drawFittedText(juce::String("ratio"), temp_bounds, juce::Justification::right, 4, 0);
 	}
 
 	set_font_size(g, 15 * abs_scale);
+	repaint();
 
 }
 

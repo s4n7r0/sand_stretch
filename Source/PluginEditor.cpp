@@ -53,11 +53,13 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
             slider->param.setTextBoxStyle(slider->param.getTextBoxPosition(), 1, 50, 25);
             slider->param.setRange(range, 0.01f);
 
-            if(i == PID::tempo) slider->param.setRange(range, 1);
-            if(i == PID::subd)  slider->param.setRange(range, 1);
+            if (i == PID::tempo || i == PID::subd) {
+                slider->param.setRange(range, 1);
+                slider->param.setColour(juce::Slider::textBoxTextColourId, colours::invisible);
+            }
 
             //bug with this when changing params not from ui when tempo on
-            slider->param.onValueChange = [&]() { repaint(); };
+            //slider->param.onValueChange = [&]() { repaint(); };
         }
 
         addAndMakeVisible(components[i]->get(), 0);

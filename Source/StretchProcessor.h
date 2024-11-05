@@ -40,6 +40,7 @@ namespace stretch {
 		bool using_tempo;
 		float beat_duration; //in samples
 		float beat_fraction;
+		float beat_ratio;
 
 		bool using_hold;
 		float hold_offset;
@@ -49,10 +50,11 @@ namespace stretch {
 
 	class Grain {
 	public:
-		Grain() : grain_offset{ 0 }, grain_index{ 0 } {}
+		Grain() : grain_offset{ 0.f }, grain_index{ 0.f } {}
 
 		void insert_sample(const GrainInfo&, float, juce::Array<juce::String>&);
 		float get_next_sample(const GrainInfo&, juce::Array<juce::String>&);
+		float declick(const GrainInfo&, juce::Array<juce::String>&);
 
 		void clear_grain();
 		void resize(int);
@@ -64,6 +66,9 @@ namespace stretch {
 
 		juce::Array<float> grain_buffer;
 	private:
+		float local_grain_size;
+		float local_grain_offset;
+		float local_grain_ratio;
 
 	};
 

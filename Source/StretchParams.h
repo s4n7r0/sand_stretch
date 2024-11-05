@@ -31,6 +31,8 @@ namespace stretch
 
 	const float MAX_HOLD_OFFSET = 4096; //maybe add + 1 later on
 
+	const float DECLICK_WINDOW = 64;
+
 	const float MAX_ZCROSS_WINDOW_SIZE = 64;
 	const int MAX_ZCROSS_HOLD_OFFSET = 1024;
 

@@ -137,11 +137,13 @@ void StretchAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     bool trigger = (bool)*apvts.getRawParameterValue("trigger");
-        
+    
+    //it'd be a bit better if it set the bpm only whenever it changed.
     double bpm = 120;
     if (auto bpmFromHost = *getPlayHead()->getPosition()->getBpm())
         bpm = bpmFromHost;
 
+    //same here but for any param
     stretch_processor.set_params(apvts, bpm);
 
     if (trigger) {
