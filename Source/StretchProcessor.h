@@ -52,7 +52,7 @@ namespace stretch {
 		Grain() : grain_offset{ 0 }, grain_index{ 0 } {}
 
 		void insert_sample(const GrainInfo&, float, juce::Array<juce::String>&);
-		float get_next_sample(GrainInfo&, juce::Array<juce::String>&);
+		float get_next_sample(const GrainInfo&, juce::Array<juce::String>&);
 
 		void clear_grain();
 		void resize(int);

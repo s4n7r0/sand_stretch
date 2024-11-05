@@ -38,6 +38,7 @@ namespace stretch
 	const juce::Range<float> tempo_range({ MIN_TEMPO_SIZE, MAX_TEMPO_SIZE }); //0 - 1/256, 8 - 1/1
 	const juce::Range<float> grain_range({ MIN_GRAIN_SIZE, MAX_GRAIN_SIZE});
 	const juce::Range<float> ratio_range({ MIN_RATIO, MAX_RATIO }); //lol
+	const juce::Range<float> subd_range({ 0, 2 }); //subdivision range: none, triplets, dotted
 	const juce::Range<float> hold_offset_range({ 0, MAX_HOLD_OFFSET });
 	const juce::Range<float> zcross_offset_range({ 0, MAX_ZCROSS_HOLD_OFFSET });
 
@@ -51,11 +52,11 @@ namespace stretch
 	using paramID = juce::ParameterID;
 
 	enum PARAMS_IDS : int							   
-	{ help,       trigger,	 hold,		 offset,			 tempo_toggle,   grain,		tempo,      ratio,		end }; //also components ids
+	{ help,       trigger,	 hold,		 offset,			 tempo_toggle,   grain,		tempo,      ratio,		    subd,			 end }; //also components ids
 	const std::vector<juce::String> PARAMS_STRING_IDS  
-	{"help",     "trigger",  "hold",	"offset",			"tempo_toggle", "grain",	"tempo",    "ratio",	"end"};
+	{"help",     "trigger",  "hold",	"offset",			"tempo_toggle", "grain",	"tempo",    "ratio",	   "subd",			"end"};
 	const std::vector<juce::Range<float>> range_vector 
-	{bool_range, bool_range, bool_range, hold_offset_range, bool_range,     grain_range, tempo_range, ratio_range};
+	{bool_range, bool_range, bool_range, hold_offset_range, bool_range,     grain_range, tempo_range, ratio_range, subd_range};
 
 	inline void add_params(UniquePVector& params) {
 
@@ -124,6 +125,14 @@ namespace stretch
 			NRange{ ratio_range, 0.01f }, 1.f,
 			Attributes()
 			.withStringFromValueFunction(string_from_val_2d)
+			.withValueFromStringFunction(val_from_string))
+		);		
+		
+		params.push_back(
+			std::make_unique<APVTS::Parameter>(paramID{ "subd", subd }, "Beat Subdivision",
+			NRange{ subd_range, 1.f }, 1.f,
+			Attributes()
+			.withStringFromValueFunction(string_from_val_0d)
 			.withValueFromStringFunction(val_from_string))
 		);
 	}

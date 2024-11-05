@@ -45,6 +45,7 @@ namespace stretch {
 	const IRec grain_bounds  ({ 25, 45, (int)(size_width / 1.25), 50 });
 	const IRec tempo_bounds  ({ 25, 45, (int)(size_width / 1.25), 50 });
 	const IRec ratio_bounds  ({ 25, 45 + 50, (int)(size_width / 1.25), 50 });
+	const IRec subd_bounds  ({ 25, 45 + 50, (int)(size_width / 1.25), 50 });
 
 	//remember to update params header too
 	const std::vector<IRec> components_bounds{
@@ -55,7 +56,8 @@ namespace stretch {
 												tempo_toggle_bounds,
 												grain_bounds,
 												tempo_bounds,
-												ratio_bounds
+												ratio_bounds,
+												subd_bounds
 
 	};
 

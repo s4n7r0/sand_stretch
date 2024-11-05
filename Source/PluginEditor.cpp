@@ -21,7 +21,8 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     new components::AttachedToggleButton(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::tempo_toggle]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::grain]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::tempo]),
-    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::ratio])
+    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::ratio]),
+    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::subd])
     }
 {
     using PID = PARAMS_IDS;
@@ -43,17 +44,19 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     for (int i = PID::help; i < PID::end; ++i) {
         components[i]->set_bounds(components_bounds[i]);
 
-        if (i >= PID::grain && i <= PID::ratio) {
+        if (i >= PID::grain && i <= PID::subd) {
             juce::Range<double> range({ range_vector[i].getStart(), range_vector[i].getEnd() });
             PASlider slider = dynamic_cast<PASlider>(components[i]);
 
-            int num_decimal = (i == PID::grain) ? 0 : 2;
+            int num_decimal = (i == PID::ratio) ? 2 : 0;
             slider->param.setNumDecimalPlacesToDisplay(num_decimal);
             slider->param.setTextBoxStyle(slider->param.getTextBoxPosition(), 1, 50, 25);
             slider->param.setRange(range, 0.01f);
 
             if(i == PID::tempo) slider->param.setRange(range, 1);
+            if(i == PID::subd)  slider->param.setRange(range, 1);
 
+            //bug with this when changing params not from ui when tempo on
             slider->param.onValueChange = [&]() { repaint(); };
         }
 
@@ -64,7 +67,7 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     hold->param.onStateChange = [&]() { repaint(); };    
 
     auto tempo_toggle = dynamic_cast<PAToggle>(components[PID::tempo_toggle]);
-    tempo_toggle->param.setButtonText("Tempo");
+    tempo_toggle->param.setButtonText("tempo");
     tempo_toggle->param.onStateChange = [&]() { repaint(); };
     //auto ratio = dynamic_cast<PASlider>(components[PID::ratio]);
 
@@ -169,4 +172,5 @@ inline void StretchAudioProcessorEditor::setup() {
     getLookAndFeel().setColour(SliderIds::thumbColourId, colours::thumb);
     getLookAndFeel().setColour(SliderIds::textBoxOutlineColourId, colours::invisible);
     getLookAndFeel().setColour(TextButtonIds::buttonColourId, colours::component_background);
+    getLookAndFeel().setColour(ToggleButton::textColourId, colours::text);
 }

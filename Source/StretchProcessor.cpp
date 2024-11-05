@@ -78,7 +78,7 @@ void Processor::set_params(APVTS& apvts, double bpm)
 {
     grain_info.size = apvts.getRawParameterValue("grain")->load();
     grain_info.ratio = apvts.getRawParameterValue("ratio")->load();
-    grain_info.size_ratio = std::roundf(grain_info.size / grain_info.ratio);
+    grain_info.size_ratio = grain_info.size / grain_info.ratio;
     
     grain_info.beat_duration = sample_rate * (60 / bpm); //60 s
     grain_info.beat_fraction = apvts.getRawParameterValue("tempo")->load();
@@ -86,7 +86,7 @@ void Processor::set_params(APVTS& apvts, double bpm)
     grain_info.beat_fraction = grain_info.beat_duration / std::pow(2, MAX_TEMPO_SIZE - grain_info.beat_fraction);
     //grain_info.beat_fraction = grain_info.beat_duration * (grain_info.beat_fraction / 16);
     grain_info.beat_fraction *= 4;
-    send_debug_msg(String().formatted("1/%.0lf fraction in samples: %.0lf", std::pow(2, MAX_TEMPO_SIZE - temp), grain_info.beat_fraction));
+    //send_debug_msg(String().formatted("1/%.0lf fraction in samples: %.0lf", std::pow(2, MAX_TEMPO_SIZE - temp), grain_info.beat_fraction));
     //send_debug_msg(String().formatted("%.01f/16 fraction in samples: %.0lf", temp / 16, grain_info.beat_fraction));
     //grain_info.size_ratio = grain_info.size / grain_info.ratio;
 
@@ -122,32 +122,49 @@ void Grain::clear_grain()
     grain_buffer.clear();
 }
 
-float Grain::get_next_sample(GrainInfo& grain, Array<String>& dbg) 
+float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg) 
 {
 
     float local_grain_size = grain.size;
     float local_grain_offset = grain_offset;
+    float bpm_ratio = grain.beat_fraction / grain.ratio;
 
     //if user moved samples too fast
-    if (!grain.using_hold && grain_index > grain.size) {
+    if (grain.using_tempo && !grain.using_hold && grain_index > grain.beat_fraction) {
+        grain_offset += grain_index - grain.beat_fraction;
+    }
+    else if (!grain.using_hold && grain_index > grain.size) {
         grain_offset += grain_index - grain.size;
     }
 
     if (grain.using_hold) {
-        if (grain.using_tempo) {
-            local_grain_size = grain.beat_fraction;
-        } else {
+        if (!grain.using_tempo) {
             local_grain_size -= grain.size_ratio;
         }
 
+        //woah slow down, lemme get some samples first
         if(grain.buffer_size >= grain.size + MAX_HOLD_OFFSET)
             local_grain_offset += grain.hold_offset;
+    }
+
+    if (grain.using_tempo) {
+        local_grain_size = grain.beat_fraction;
     }
 
     if (grain_index >= local_grain_size) {
 
         if (!grain.using_hold) {
-            grain_offset += grain.size_ratio;
+
+            if (grain.using_tempo && grain.buffer_size >= grain.beat_fraction) {
+                grain_offset += bpm_ratio;
+
+                if (grain_offset >= grain.buffer_size) {
+                    send_debug_msg(String().formatted("Heeey too large! offset: %.1f bufsize: %d", local_grain_offset, grain.buffer_size), dbg);
+                }
+
+            } else {
+                grain_offset += grain.size_ratio;
+            }
         }
 
         grain_index = 0;

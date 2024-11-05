@@ -23,12 +23,16 @@ void StretchAudioProcessorEditor::show_or_hide() {
 	if (!help_state) {
 		if (tempo_toggle->param.getToggleState()) {
 			components[PARAMS_IDS::grain]->get()->setVisible(false);
+			components[PARAMS_IDS::ratio]->get()->setVisible(false);
 			components[PARAMS_IDS::tempo]->get()->setVisible(true);
+			components[PARAMS_IDS::subd]->get()->setVisible(true);
 
 		}
 		else {
 			components[PARAMS_IDS::grain]->get()->setVisible(true);
+			components[PARAMS_IDS::ratio]->get()->setVisible(true);
 			components[PARAMS_IDS::tempo]->get()->setVisible(false);
+			components[PARAMS_IDS::subd]->get()->setVisible(false);
 		}
 	}
 
@@ -61,7 +65,13 @@ void StretchAudioProcessorEditor::draw_labels(juce::Graphics& g) {
 	temp_bounds = ratio_text_bounds.bounds;
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
-	g.drawFittedText(juce::String("ratio"), temp_bounds, juce::Justification::right, 4, 0);
+
+	if (tempo_toggle->param.getToggleState()) {
+		g.drawFittedText(juce::String("subdivision"), temp_bounds, juce::Justification::right, 4, 0);
+	}
+	else {
+		g.drawFittedText(juce::String("ratio"), temp_bounds, juce::Justification::right, 4, 0);
+	}
 
 	set_font_size(g, 15 * abs_scale);
 
