@@ -50,7 +50,7 @@ namespace stretch {
 
 	class Grain {
 	public:
-		Grain() : grain_offset{ 0.f }, grain_index{ 0.f } {}
+		Grain() : grain_offset{ 0.f }, grain_index{ 0.f }, declick_count{ 0 }, declick_sum{ 0.f } {}
 
 		void insert_sample(const GrainInfo&, float, juce::Array<juce::String>&);
 		float get_next_sample(const GrainInfo&, juce::Array<juce::String>&);
@@ -69,6 +69,9 @@ namespace stretch {
 		float local_grain_size;
 		float local_grain_offset;
 		float local_grain_ratio;
+		int declick_count;
+		float declick_sum;
+		float declick_prev_sample;
 
 	};
 
