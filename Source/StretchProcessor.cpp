@@ -187,7 +187,8 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
     // * 2 to make sure we have enough samples to calculate the sum from
     bool is_index_in_declick_range = (grain_index > local_grain_size - DECLICK_WINDOW / 2 || grain_index < DECLICK_WINDOW / 2);
     //make sure there are enough samples to declick
-    if (local_grain_ratio <= local_grain_size - DECLICK_WINDOW && grain_offset >= DECLICK_WINDOW * 2 && is_index_in_declick_range) {
+    //figure out a way to check if ratio is greater than some size and make it work below 2 ratio
+    if (local_grain_ratio <= local_grain_size - DECLICK_WINDOW / 2 && grain_offset >= DECLICK_WINDOW * 2 && is_index_in_declick_range) {
         sample = declick(grain, dbg);
     }
 
@@ -210,56 +211,51 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
 }
 
 float Grain::declick(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
-    //turn it to static as to subtract and add next samples instead of summing them
-    //every time declick is called
 
     //moving average
 
-    float sum = 0;
+    const int declick_offset = declick_count - DECLICK_WINDOW;
+    const int offset_plus_size = (int)local_grain_offset + (int)local_grain_size;
     int penalty = 0;
     float sample = 0;
 
+    //adjust from where we read samples if not holding, since offset moved it's place
     if (grain_index <= DECLICK_WINDOW / 2) {
         penalty = local_grain_ratio;
     }
 
-    //first let's calculate samples up till the end of our current grain
+    //let's calculate samples up till the end of our current grain
     //decreasing the index we're starting from the further we are in the declicking process
     //so we're moving the window
 
-    if (grain.using_hold) {
-        for (int i = -DECLICK_WINDOW + declick_count; i < 0; ++i) {
-            sum += grain_buffer[(int)local_grain_offset + (int)local_grain_size + i];
-        }
+    //looks like we just started
+    if (declick_count == 0) {
 
-        for (int i = 0; i < declick_count; ++i) {
-            sum += grain_buffer[(int)local_grain_offset + i];
+        declick_prev_sample = grain_buffer[offset_plus_size - DECLICK_WINDOW];
+
+        for (int i = -DECLICK_WINDOW + declick_count; i < 0; ++i) {
+            declick_sum += grain_buffer[offset_plus_size + i];
         }
-    }
+    } 
+    else if (grain.using_hold) {
+        declick_sum -= declick_prev_sample;
+        declick_prev_sample = grain_buffer[offset_plus_size + declick_offset];
+        declick_sum += grain_buffer[(int)local_grain_offset + declick_count - 1];
+    } 
     else {
-        
-        //let's look into the future, by adding grain ratio to the offset
-        //so we look at samples from where next grain is going to start
-
-        //but now if grain_index is back to 0, that means the offsets moved, so let's
-        //adjust the offsets and keep looking from the previous positions
-        for (int i = -DECLICK_WINDOW + declick_count; i < 0; ++i) {
-            sum += grain_buffer[(int)local_grain_offset + (int)local_grain_size - penalty + i];
-        }   
-
-        for (int i = 0; i <= declick_count; ++i) {
-            sum += grain_buffer[(int)local_grain_offset + local_grain_ratio - penalty + i];
-        }
+        declick_sum -= declick_prev_sample;
+        declick_prev_sample = grain_buffer[offset_plus_size - penalty + declick_offset];
+        declick_sum += grain_buffer[(int)local_grain_offset + local_grain_ratio - penalty + declick_count - 1];
     }
 
-    sample = sum / DECLICK_WINDOW;
-    declick_prev_sample = sample;
-
+    sample = declick_sum / DECLICK_WINDOW;
     declick_count++;
 
     //if index is about to reach the end of declicking window, reset the count
     if (grain_index + 1 + DECLICK_WINDOW / 2 == DECLICK_WINDOW) {
         declick_count = 0;
+        declick_sum = 0;
+        declick_prev_sample = 0;
     }
 
     return sample;
