@@ -65,7 +65,7 @@ void Processor::zcross(juce::AudioBuffer<float>& input_buffer) {
         summed_sample /= num_channels;
 
         if (cur_zcross_state == ZCROSS_STATE::NONE) {
-            //zcross_index = 0;
+            grain_info.zcross_found = false;
             if (summed_sample > 0) cur_zcross_state = ZCROSS_STATE::ABOVE;
             if (summed_sample < 0) cur_zcross_state = ZCROSS_STATE::BELOW;
         }
@@ -73,13 +73,13 @@ void Processor::zcross(juce::AudioBuffer<float>& input_buffer) {
         if (summed_sample > 0 && cur_zcross_state == ZCROSS_STATE::BELOW) {
             grain_info.zcross_samples.add(grain_info.buffer_size + sample);
             cur_zcross_state = ZCROSS_STATE::ABOVE;
-            send_debug_msg(String().formatted("ayy we got a zcross index at: %d", grain_info.buffer_size + sample));
+            //send_debug_msg(String().formatted("ayy we got a zcross index at: %d", grain_info.buffer_size + sample));
         }        
         
         if (summed_sample < 0 && cur_zcross_state == ZCROSS_STATE::ABOVE) {
             grain_info.zcross_samples.add(grain_info.buffer_size + sample);
             cur_zcross_state = ZCROSS_STATE::BELOW;
-            send_debug_msg(String().formatted("ayy we got a zcross index at: %d", grain_info.buffer_size + sample));
+            //send_debug_msg(String().formatted("ayy we got a zcross index at: %d", grain_info.buffer_size + sample));
         }
 
     }
@@ -94,6 +94,7 @@ void Processor::clear_buffer(int num_channels) {
     mismatched = false;
 
     grain_info.zcross_samples.clear();
+    cur_zcross_state = ZCROSS_STATE::NONE;
 
     grain_info.buffer_size = 0;
     buffer_is_dirty = false;
@@ -113,6 +114,7 @@ void Processor::process(juce::AudioBuffer<float>& output_buffer)
         }
 
     }
+
     is_mismatched();
 
 }
@@ -145,6 +147,22 @@ void Processor::set_params(APVTS& apvts, double bpm)
     }
 
     grain_info.beat_ratio = grain_info.beat_fraction / grain_info.ratio;
+
+    float temp_zcross_window_size = apvts.getRawParameterValue("zwindow")->load();
+    float temp_zcross_window_offset = apvts.getRawParameterValue("zoffset")->load();
+    
+    bool has_zcross_window_moved = (temp_zcross_window_size != grain_info.zcross_window_size);
+    bool has_zcross_offset_moved = (temp_zcross_window_offset != grain_info.zcross_window_offset);
+
+    //this is kinda bruteforcing
+    if (has_zcross_offset_moved || has_zcross_window_moved) {
+        for (int channel = 0; channel < num_channels; ++channel) {
+            grains[channel].i_found_a_zcross = false;
+        }
+    }
+
+    grain_info.zcross_window_size = temp_zcross_window_size;
+    grain_info.zcross_window_offset = temp_zcross_window_offset;
 }
 
 void Processor::send_debug_msg(const String& msg)
@@ -178,6 +196,8 @@ void Grain::clear_grain()
     local_grain_size = 0;
     local_grain_ratio = 0;
     local_grain_offset = 0;
+    last_zcross_index = 0;
+    i_found_a_zcross = false;
     grain_buffer.clear();
 }
 
@@ -187,6 +207,18 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
     local_grain_size = grain.size;
     local_grain_offset = grain_offset;
     local_grain_ratio = grain.size / grain.ratio;
+
+    if (grain.zcross_window_size > 0 && !grain.using_tempo) {
+        if (grain.using_hold) {
+            set_zcross_bounds(grain, dbg);
+            local_grain_size = zcross_grain_size;
+            local_grain_offset = zcross_grain_offset;
+        }
+        else {
+            //grains arent using the zcross indexes anymore, update the bounds
+            i_found_a_zcross = false;
+        }
+    }
 
     if (grain.using_tempo) {
         local_grain_size = grain.beat_fraction;
@@ -200,7 +232,7 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
 
     //adjust grain size depending on ratio
     if (grain.using_hold) {
-        if (!grain.using_tempo) {
+        if (!grain.using_tempo && grain.zcross_window_size == 0) {
             local_grain_size -= local_grain_ratio;
         }
 
@@ -209,14 +241,18 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
             local_grain_offset += grain.hold_offset;
     }
 
-
     float sample = grain_buffer[local_grain_offset + grain_index];
 
     bool is_index_in_declick_range = (grain_index > local_grain_size - DECLICK_WINDOW / 2 || grain_index < DECLICK_WINDOW / 2);
 
-    //make sure there are enough samples to declick
     //figure out a way to check if ratio is greater than some size and make it work below 2 ratio
-    if (local_grain_ratio <= local_grain_size - DECLICK_WINDOW / 2 && grain_offset >= DECLICK_WINDOW * 2 && is_index_in_declick_range) {
+    bool is_grain_in_declick_range = (local_grain_ratio <= local_grain_size - DECLICK_WINDOW / 2);
+
+    bool is_grain_being_zcrossed = (!grain.using_tempo && grain.using_hold && grain.zcross_window_size > 0);
+    //make sure there are enough samples to declick
+
+    //if using tempo, moving zcross window size makes samples not being declicked
+    if (!is_grain_being_zcrossed && is_grain_in_declick_range && grain_offset >= DECLICK_WINDOW * 2 && is_index_in_declick_range) {
         sample = declick(grain, dbg);
     }
 
@@ -289,8 +325,33 @@ float Grain::declick(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
     return sample;
 }
 
-int Grain::get_zcross_bounds(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
-    return 0;
+void  Grain::set_zcross_bounds(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
+
+    if (i_found_a_zcross) return;
+
+    if (grain.zcross_window_size + grain.zcross_window_offset > grain.zcross_samples.size()) return;
+
+    for (int i = last_zcross_index; i < grain.zcross_samples.size(); ++i) {
+
+        if (grain.zcross_samples[i] >= grain_offset + grain.zcross_samples[0]) {
+
+            //i might use it for something one day...
+            int temp_zcross_offset = grain.zcross_samples[grain.zcross_window_offset + i];
+            int temp_zcross_size = temp_zcross_offset - grain.zcross_samples[grain.zcross_window_offset + i - grain.zcross_window_size];
+
+            zcross_grain_size = temp_zcross_size;
+            zcross_grain_offset = grain.zcross_samples[i];
+            send_debug_msg(String().formatted("zcrossoff: %d, zcrosssize: %d", zcross_grain_offset, zcross_grain_size), dbg);
+
+            local_zcross_window_offset = grain.zcross_window_offset;
+            local_zcross_window_size = grain.zcross_window_size;
+
+            i_found_a_zcross = true;
+            last_zcross_index = i; //save the index so its faster to find the next one in case offsets moved
+
+            return;
+        }
+    }
 }
 
 void Grain::insert_sample(const GrainInfo& grain, float sample, juce::Array<juce::String>& dbg)

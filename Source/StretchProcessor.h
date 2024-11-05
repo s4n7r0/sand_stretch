@@ -45,6 +45,9 @@ namespace stretch {
 		float hold_offset;
 
 		juce::Array<int> zcross_samples; //indexes where samples crossed 0
+		int zcross_window_size;
+		int zcross_window_offset;
+		bool zcross_found;
 
 		int buffer_size;
 	};
@@ -56,7 +59,7 @@ namespace stretch {
 		void insert_sample(const GrainInfo&, float, juce::Array<juce::String>&);
 		float get_next_sample(const GrainInfo&, juce::Array<juce::String>&);
 		float declick(const GrainInfo&, juce::Array<juce::String>&);
-		int get_zcross_bounds(const GrainInfo&, juce::Array<juce::String>&);
+		void set_zcross_bounds(const GrainInfo&, juce::Array<juce::String>&);
 
 		void clear_grain();
 		void resize(int);
@@ -66,6 +69,8 @@ namespace stretch {
 		float grain_offset;
 		float grain_index;
 
+		bool i_found_a_zcross;
+
 		juce::Array<float> grain_buffer;
 	private:
 		float local_grain_size;
@@ -74,6 +79,11 @@ namespace stretch {
 		int declick_count;
 		float declick_sum;
 		float declick_prev_sample;
+		int zcross_grain_size;
+		int zcross_grain_offset;
+		int local_zcross_window_size;
+		int local_zcross_window_offset;
+		int last_zcross_index{ 0 };
 	};
 
 	class Processor {
