@@ -2,25 +2,27 @@
 
 //Things to improve upon from first version of sand_stretch:
 /*
-Remove buffersize and instead delete previously used samples which 
+Remove buffersize and instead delete previously used samples which - DONE
 can't be reached anymore. - DONE
 Smooth up the sliders so it doesn't click.
 Design good and fast declicking and crossfading algorithms.
 	This means, 
-	(declicking)   find a way to smooth up the end of current grain 
-			       and the beginning of the next grain so they're smooth and connected
-				   It would be nice doing a divide and conquer thing but idk if u need grain sizes divisible by 2
-    (Crossfading)  find a way to crossfade with the next grain.
-				   crossfade should cover the area from
-				   the start of the grain up to 25%,
-				   and from 75% of the grain up to the end.
+
+	(declicking) DONE   find a way to smooth up the end of current grain 
+						and the beginning of the next grain so they're smooth and connected
+						It would be nice doing a divide and conquer thing but idk if u need grain sizes divisible by 2
+
+    (Crossfading)		find a way to crossfade with the next grain.
+						crossfade should cover the area from
+						the start of the grain up to 25%,
+						and from 75% of the grain up to the end.
 	- It would be useful to have the grain array be twice the size of a grain so we can store the next grain already
 	- but would require adjusting or smth idk.
 	+ Instead it would be better to look a bit into the future somehow, and if crossfade is at 25%
 	+ and ratio would make it difficult to crossfade, clamp samples so it still gets crossfaded.
 GUI in the style of napalm. - done
 Don't use pointers to the buffer, and instead hold the current grain in an array. - DONE
-Add a tempo option, grain size gets replaced by tempo measure
+Add a tempo option, grain size gets replaced by tempo measure - DONE
 
 optionally:
 Make sure it sounds the same as the old version. - HELL NAW
@@ -49,6 +51,8 @@ namespace stretch {
 		int zcross_window_offset;
 		bool zcross_found;
 
+		float crossfade;
+
 		int buffer_size;
 	};
 
@@ -58,8 +62,10 @@ namespace stretch {
 
 		void insert_sample(const GrainInfo&, float, juce::Array<juce::String>&);
 		float get_next_sample(const GrainInfo&, juce::Array<juce::String>&);
+
 		float declick(const GrainInfo&, juce::Array<juce::String>&);
 		void set_zcross_bounds(const GrainInfo&, juce::Array<juce::String>&);
+		float crossfade(const GrainInfo&, juce::Array <juce::String>&);
 
 		void clear_grain();
 		void resize(int);

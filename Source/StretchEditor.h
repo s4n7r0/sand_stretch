@@ -48,6 +48,7 @@ namespace stretch {
 	const IRec subd_bounds	   ({ 25, 45 + 50, (int)(size_width / 1.25), 50 });
 	const IRec zwindow_bounds  ({ 25, 95 + 50, (int)(size_width / 1.25), 50 });
 	const IRec zoffset_bounds  ({ 25, 145 + 50, (int)(size_width / 1.25), 50 });
+	const IRec crossfade_bounds  ({ 25, 195 + 50, (int)(size_width / 1.25), 50 });
 
 	//remember to update params header too
 	const std::vector<IRec> components_bounds{
@@ -61,7 +62,8 @@ namespace stretch {
 												ratio_bounds,
 												subd_bounds,
 												zwindow_bounds,
-												zoffset_bounds
+												zoffset_bounds,
+												crossfade_bounds
 
 	};
 

@@ -124,13 +124,19 @@ void StretchAudioProcessorEditor::draw_labels(juce::Graphics& g) {
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
 
-	g.drawFittedText(juce::String("ZCross Size"), temp_bounds, juce::Justification::right, 4, 0);	
+	g.drawFittedText(juce::String("zcross size"), temp_bounds, juce::Justification::right, 4, 0);	
 	
 	temp_bounds = zoffset_text_bounds.bounds;
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
 
-	g.drawFittedText(juce::String("ZCross Offset"), temp_bounds, juce::Justification::right, 4, 0);
+	g.drawFittedText(juce::String("zcross offset"), temp_bounds, juce::Justification::right, 4, 0);
+
+	temp_bounds = crossfade_text_bounds.bounds;
+	temp_bounds *= abs_scale;
+	temp_bounds.setWidth(slider_width);
+
+	g.drawFittedText(juce::String("crossfade"), temp_bounds, juce::Justification::right, 4, 0);
 
 	set_font_size(g, 15 * abs_scale);
 
@@ -176,7 +182,7 @@ void StretchAudioProcessorEditor::draw_debug(juce::Graphics& g) {
 	IRec debug_bound(25, 200, size_width, 25);
 
 	for (int i = 0; i < 5; ++i) {
-		debug_bound.setY(250 + 25 * i);
+		debug_bound.setY(300 + 25 * i);
 		g.drawFittedText(audioProcessor.stretch_processor.debug_strings[i], debug_bound , juce::Justification::left, 1, 0);
 	}
 

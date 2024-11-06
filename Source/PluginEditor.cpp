@@ -24,7 +24,8 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::ratio]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::subd]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::zwindow]),
-    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::zoffset])
+    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::zoffset]),
+    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::crossfade])
     }
 {
     using PID = PARAMS_IDS;
@@ -79,6 +80,7 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     ratio_text_bounds = StretchBounds(components[PID::ratio]->get()->getBounds(), -20);
     zwindow_text_bounds = StretchBounds(components[PID::zwindow]->get()->getBounds(), -20);
     zoffset_text_bounds = StretchBounds(components[PID::zoffset]->get()->getBounds(), -20);
+    crossfade_text_bounds = StretchBounds(components[PID::crossfade]->get()->getBounds(), -20);
 
     resized();
 

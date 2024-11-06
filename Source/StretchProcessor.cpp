@@ -163,6 +163,8 @@ void Processor::set_params(APVTS& apvts, double bpm)
 
     grain_info.zcross_window_size = temp_zcross_window_size;
     grain_info.zcross_window_offset = temp_zcross_window_offset;
+
+    grain_info.crossfade = apvts.getRawParameterValue("crossfade")->load();
 }
 
 void Processor::send_debug_msg(const String& msg)
@@ -352,6 +354,10 @@ void  Grain::set_zcross_bounds(const GrainInfo& grain, juce::Array<juce::String>
             return;
         }
     }
+}
+
+float Grain::crossfade(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
+    return 0.f;
 }
 
 void Grain::insert_sample(const GrainInfo& grain, float sample, juce::Array<juce::String>& dbg)

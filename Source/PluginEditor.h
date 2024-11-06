@@ -58,6 +58,7 @@ private:
     stretch::StretchBounds ratio_text_bounds;
     stretch::StretchBounds zwindow_text_bounds;
     stretch::StretchBounds zoffset_text_bounds;
+    stretch::StretchBounds crossfade_text_bounds;
 
     //stretch::URLTimer url_timer;
 
