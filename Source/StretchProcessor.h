@@ -64,8 +64,8 @@ namespace stretch {
 		float get_next_sample(const GrainInfo&, juce::Array<juce::String>&);
 
 		float declick(const GrainInfo&, juce::Array<juce::String>&);
-		void set_zcross_bounds(const GrainInfo&, juce::Array<juce::String>&);
 		float crossfade(const GrainInfo&, juce::Array <juce::String>&);
+		void set_zcross_bounds(const GrainInfo&, juce::Array<juce::String>&);
 
 		void clear_grain();
 		void resize(int);
@@ -82,9 +82,16 @@ namespace stretch {
 		float local_grain_size;
 		float local_grain_offset;
 		float local_grain_ratio;
+
 		int declick_count;
 		float declick_sum;
 		float declick_prev_sample;
+
+		float crossfade_size;
+		float crossfade_gain{ 0 };
+		float crossfade_gain_value{ 0 };
+		int crossfade_count{ 0 };
+
 		int zcross_grain_size;
 		int zcross_grain_offset;
 		int local_zcross_window_size;
