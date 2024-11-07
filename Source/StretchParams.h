@@ -6,8 +6,8 @@
 namespace stretch
 {
 
-	const float size_width = 400;
-	const float size_height = 200;
+	const float size_width = 450;
+	const float size_height = 325;
 	const int MAX_SAMPLES_IN_BUFFER = 44100 * 100000 / 44100; // more than a day at 44100HZ, 6 hours on 192000 :sob:
 
 	#ifdef DBLUE_COMPATIBILITY
@@ -31,7 +31,8 @@ namespace stretch
 
 	const float MAX_HOLD_OFFSET = 4096; //maybe add + 1 later on
 
-	const float DECLICK_WINDOW = 64;
+	const float DECLICK_WINDOW = 4; // 4*2^declickparam
+	const float MAX_DECLICK_WINDOW = 5;
 
 	enum ZCROSS_STATE: int { BELOW, NONE, ABOVE };
 	const float MAX_ZCROSS_WINDOW_SIZE = 64;
@@ -41,6 +42,7 @@ namespace stretch
 
 	const juce::Range<float> bool_range({ 0, 1 }); 
 	const juce::Range<float> tempo_range({ MIN_TEMPO_SIZE, MAX_TEMPO_SIZE }); //0 - 1/256, 8 - 1/1
+	const juce::Range<float> declick_range({ 0, MAX_DECLICK_WINDOW}); 
 	const juce::Range<float> grain_range({ MIN_GRAIN_SIZE, MAX_GRAIN_SIZE});
 	const juce::Range<float> ratio_range({ MIN_RATIO, MAX_RATIO }); //lol
 	const juce::Range<float> subd_range({ 0, 2 }); //subdivision range: none, triplets, dotted
@@ -59,18 +61,23 @@ namespace stretch
 	using paramID = juce::ParameterID;
 
 	enum PARAMS_IDS : int							   
-	{ help,       trigger,	 hold,		 offset,			 tempo_toggle,   
-	  grain,	  tempo,     ratio,	     subd,			 zwindow,
-	  zoffset,	  crossfade,			end}; //also components ids
+	{ 
+	  help,       trigger,	  hold,		  offset,			 tempo_toggle,   
+	  declick,    grain,	  tempo,      ratio,		     subd,			 
+      zwindow,    zoffset,	  crossfade, 					 end
+	}; //also components ids
 	const std::vector<juce::String> PARAMS_STRING_IDS  
-	{"help",     "trigger",  "hold",	"offset",			"tempo_toggle", 
-	 "grain",	 "tempo",    "ratio",	"subd",			"zwindow",
-	 "zoffset",	 "crossfade",			"end"
+	{
+	 "help",     "trigger",  "hold",	 "offset",			"tempo_toggle", 
+	 "declick",  "grain",	 "tempo",    "ratio",			"subd",			
+     "zwindow",  "zoffset",	 "crossfade","declick",			"end"
 	};
 	const std::vector<juce::Range<float>> range_vector 
-	{bool_range, bool_range, bool_range, hold_offset_range, bool_range,     
-	 grain_range, tempo_range, ratio_range, subd_range, zcross_window_range, 
-	 zcross_offset_range, crossfade_range};
+	{
+	 bool_range, bool_range, bool_range, hold_offset_range, bool_range,     
+	 declick_range, grain_range, tempo_range, ratio_range, subd_range, 
+	 zcross_window_range, zcross_offset_range, crossfade_range
+	};
 
 	inline void add_params(UniquePVector& params) {
 
@@ -103,11 +110,11 @@ namespace stretch
 		
 		params.push_back(
 			std::make_unique<APVTS::Parameter>(paramID{ "offset", offset }, "Offset",
-			NRange{ hold_offset_range, 1.f}, 0.f,
-			Attributes()
-			.withStringFromValueFunction(string_from_val_0d)
-			.withValueFromStringFunction(val_from_string))
-		);		
+				NRange{ hold_offset_range, 1.f }, 0.f,
+				Attributes()
+				.withStringFromValueFunction(string_from_val_0d)
+				.withValueFromStringFunction(val_from_string))
+		);
 
 		params.push_back(
 			std::make_unique<APVTS::Parameter>(paramID{ "tempo_toggle", tempo_toggle }, "Tempo Toggle",
@@ -116,7 +123,15 @@ namespace stretch
 			.withStringFromValueFunction(string_from_val_0d)
 			.withValueFromStringFunction(val_from_string)
 			.withBoolean(true))
-		);
+		);			
+
+		params.push_back(
+			std::make_unique<APVTS::Parameter>(paramID{ "declick", declick }, "Declick",
+			NRange{ declick_range, 1.f}, 0.f,
+			Attributes()
+			.withStringFromValueFunction(string_from_val_0d)
+			.withValueFromStringFunction(val_from_string))
+		);		
 
 		params.push_back(
 			std::make_unique<APVTS::Parameter>(paramID{ "grain", grain }, "Grain size", 

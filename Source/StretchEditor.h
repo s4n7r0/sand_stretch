@@ -40,15 +40,16 @@ namespace stretch {
 	const IRec trigger_bounds  ({ 37, 10	   , 75, 25 });
 	const IRec hold_bounds	   ({ 37 + 75    , 10, 55, 25 });
 	const IRec offset_bounds   ({ 112 + 55   , 10, 50, 25 });
-	const IRec tempo_toggle_bounds  ({ 167 + 50   , 10, 100, 25 });
+	const IRec tempo_toggle_bounds  ({ 167 + 50   , 10, 70, 25 });
+	const IRec declick_bounds  ({ 222 + 130   , 11, 50, 25 });
 	const IRec reverse_bounds  ({ 25 + 75 * 2, 10, 75, 25 });
-	const IRec grain_bounds    ({ 25, 45, (int)(size_width / 1.25), 50 });
-	const IRec tempo_bounds    ({ 25, 45, (int)(size_width / 1.25), 50 });
-	const IRec ratio_bounds    ({ 25, 45 + 50, (int)(size_width / 1.25), 50 });
-	const IRec subd_bounds	   ({ 25, 45 + 50, (int)(size_width / 1.25), 50 });
-	const IRec zwindow_bounds  ({ 25, 95 + 50, (int)(size_width / 1.25), 50 });
-	const IRec zoffset_bounds  ({ 25, 145 + 50, (int)(size_width / 1.25), 50 });
-	const IRec crossfade_bounds  ({ 25, 195 + 50, (int)(size_width / 1.25), 50 });
+	const IRec grain_bounds    ({ 25, 50,		  (int)(size_width / 1.2), 50 });
+	const IRec tempo_bounds    ({ 25, 50,		  (int)(size_width / 1.2), 50 });
+	const IRec ratio_bounds    ({ 25, 50 + 50,    (int)(size_width / 1.2), 50 });
+	const IRec subd_bounds	   ({ 25, 50 + 50,    (int)(size_width / 1.2), 50 });
+	const IRec zwindow_bounds  ({ 25, 100 + 50,    (int)(size_width / 1.2), 50 });
+	const IRec zoffset_bounds  ({ 25, 150 + 50,   (int)(size_width / 1.2), 50 });
+	const IRec crossfade_bounds  ({ 25, 200 + 50, (int)(size_width / 1.2), 50 });
 
 	//remember to update params header too
 	const std::vector<IRec> components_bounds{
@@ -57,6 +58,7 @@ namespace stretch {
 												hold_bounds,
 												offset_bounds,
 												tempo_toggle_bounds,
+												declick_bounds,
 												grain_bounds,
 												tempo_bounds,
 												ratio_bounds,
@@ -86,13 +88,19 @@ namespace stretch {
 	//call set_font after using
 	const juce::Font monospace_font(juce::FontOptions(juce::Font::getDefaultMonospacedFontName(), 0, juce::Font::plain));
 
-	const String trigger_text	("Trigger:		 guess what it does");
-	const String hold_text		("Hold:			 holds current grain in place");
-	const String offset_text		("Offset:			 offsets grain's position when hold is on");
-	const String reverse_text		("Reverse:			 outputs samples in reverse");
-	const String grain_text		("Grain Size:	 how many samples to keep in one grain");
-	const String ratio_text		("Ratio:		 stretches input by that amount");
-	const String zcross_text	("ZCross Window: holds grains where beginning and end sample crossed 0");
+	const String trigger_text		("Trigger:       start the engine");
+	const String hold_text			("Hold:          holds current grain in place");
+	const String offset_text		("Hold Offset:   offsets held grain's position");
+	const String tempo_toggle_text  ("Tempo Toggle:  use beat length instead of grain size");
+	const String declick_text		("Declick:       declick 4 * (2 ^ declick) samples");
+	//const String reverse_text		("Reverse:       outputs samples in reverse");
+	const String grain_text			("Grain Size:    how many samples to keep in one grain");
+	const String tempo_text			("Tempo:         grain size in note duration");
+	const String ratio_text			("Ratio:         stretches input by that amount");
+	const String subd_text			("Subdivision:   adjust held grain's length");
+	const String zcross_text		("ZCross Size:   hold closest zcrossed samples");
+	const String zoffset_text		("ZCross Offset: offsets zcross window");
+	const String crossfade_text		("Crossfade:     crossfades grains");
 
 	const juce::String contact_text("If you have any issues, please contact me on \ndiscord: .sandr0");
 	const juce::String version_text("Ver: " + STRETCH_VER);

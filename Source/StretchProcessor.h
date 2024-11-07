@@ -46,6 +46,8 @@ namespace stretch {
 		bool using_hold;
 		float hold_offset;
 
+		int declick_window;
+
 		juce::Array<int> zcross_samples; //indexes where samples crossed 0
 		int zcross_window_size;
 		int zcross_window_offset;

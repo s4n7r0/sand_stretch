@@ -63,7 +63,7 @@ void StretchAudioProcessorEditor::set_scales() {
 	x_scale = getWidth() / size_width;
 	y_scale = getHeight() / size_height;
 	abs_scale = std::log2f(std::fabs(((size_width - getWidth()) / size_width) * ((size_height - getHeight()) / size_height)) + 2.f);
-	slider_width = getWidth() - (size_width / 5) * abs_scale;
+	slider_width = getWidth() - (size_width / 6) * abs_scale;
 }
 
 void StretchAudioProcessorEditor::draw_labels(juce::Graphics& g) {
@@ -77,7 +77,7 @@ void StretchAudioProcessorEditor::draw_labels(juce::Graphics& g) {
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
 
-	IRec tempo_bounds = IRec({ 25, 45, 50, 50 }) *= abs_scale;
+	IRec tempo_bounds = IRec({ 25, 50, 50, 50 }) *= abs_scale;
 	auto tempo_comp = dynamic_cast<components::AttachedSlider*>(components[PARAMS_IDS::tempo]);
 	float tempo_val = tempo_comp->param.getValue();
 
@@ -97,7 +97,7 @@ void StretchAudioProcessorEditor::draw_labels(juce::Graphics& g) {
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
 
-	IRec subdivision_bounds = IRec({ 10, 45 + 50, 65, 50 }) *= abs_scale;
+	IRec subdivision_bounds = IRec({ 17, 50 + 50, 65, 50 }) *= abs_scale;
 	auto subdivision_comp = dynamic_cast<components::AttachedSlider*>(components[PARAMS_IDS::subd]);
 	float subdivision_val = subdivision_comp->param.getValue();
 
@@ -124,19 +124,27 @@ void StretchAudioProcessorEditor::draw_labels(juce::Graphics& g) {
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
 
-	g.drawFittedText(juce::String("zcross size"), temp_bounds, juce::Justification::right, 4, 0);	
+	g.drawFittedText(juce::String("zcross size"), temp_bounds, juce::Justification::right, 1, 0);	
 	
 	temp_bounds = zoffset_text_bounds.bounds;
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
 
-	g.drawFittedText(juce::String("zcross offset"), temp_bounds, juce::Justification::right, 4, 0);
+	g.drawFittedText(juce::String("zcross offset"), temp_bounds, juce::Justification::right, 1, 0);
 
 	temp_bounds = crossfade_text_bounds.bounds;
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
 
-	g.drawFittedText(juce::String("crossfade"), temp_bounds, juce::Justification::right, 4, 0);
+	g.drawFittedText(juce::String("crossfade"), temp_bounds, juce::Justification::right, 1, 0);
+
+	temp_bounds = declick_text_bounds.bounds;
+	temp_bounds.translate(-40, 0);
+	temp_bounds *= abs_scale;
+	//temp_bounds.setWidth(slider_width);
+	set_font_size(g, 14 * abs_scale);
+
+	g.drawFittedText(juce::String("declick"), temp_bounds, juce::Justification::centred, 1, 0);
 
 	set_font_size(g, 15 * abs_scale);
 
@@ -183,7 +191,7 @@ void StretchAudioProcessorEditor::draw_debug(juce::Graphics& g) {
 
 	for (int i = 0; i < 5; ++i) {
 		debug_bound.setY(300 + 25 * i);
-		g.drawFittedText(audioProcessor.stretch_processor.debug_strings[i], debug_bound , juce::Justification::left, 1, 0);
+		//g.drawFittedText(audioProcessor.stretch_processor.debug_strings[i], debug_bound , juce::Justification::left, 1, 0);
 	}
 
 }

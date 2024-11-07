@@ -125,6 +125,8 @@ void Processor::set_params(APVTS& apvts, double bpm)
     grain_info.using_hold = (bool)apvts.getRawParameterValue("hold")->load();
     grain_info.hold_offset = apvts.getRawParameterValue("offset")->load();
     grain_info.using_tempo = (bool)apvts.getRawParameterValue("tempo_toggle")->load();
+    grain_info.declick_window = apvts.getRawParameterValue("declick")->load();
+    grain_info.declick_window = DECLICK_WINDOW * std::powf(2, grain_info.declick_window);
 
     grain_info.size = apvts.getRawParameterValue("grain")->load();
     grain_info.ratio = apvts.getRawParameterValue("ratio")->load();
@@ -216,6 +218,8 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
     local_grain_offset = grain_offset;
     local_grain_ratio = grain.size / grain.ratio;
     float crossfade_percentage = grain.crossfade / 250; // up to 40%, 50% is bugged :P
+    float ratio_fraction = local_grain_ratio / grain.size;
+    const float DECLICK_WINDOW = grain.declick_window;
 
     if (grain.zcross_window_size > 0 && !grain.using_tempo) {
         if (grain.using_hold) {
@@ -254,28 +258,31 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
         crossfade_size = local_grain_size * crossfade_percentage;
         crossfade_gain_value = (1 / crossfade_size) / 2;
     }
+    else {
+        crossfade_size = 0;
+        crossfade_gain_value = 0;
+    }
 
     float sample = grain_buffer[local_grain_offset + grain_index];
 
+    //make sure there are enough samples for everythin
     bool index_in_declick_range = (grain_index > local_grain_size - DECLICK_WINDOW / 2 || grain_index < DECLICK_WINDOW / 2);
-    //figure out a way to check if ratio is greater than some size and make it work below 2 ratio
-    bool grain_in_declick_range = (local_grain_ratio <= local_grain_size - DECLICK_WINDOW / 2);
+    bool grain_in_declick_range = ( local_grain_size > DECLICK_WINDOW * 2);
+    bool can_be_declicked = index_in_declick_range && grain_in_declick_range;
 
-    //figure this shit out
-    bool index_in_crossfade_range = (local_grain_ratio <= local_grain_size - crossfade_size || true);
-    bool grain_in_crossfade_range = (grain_index >= local_grain_size - crossfade_size || grain_index < crossfade_size);
+    bool index_in_crossfade_range = (grain_index >= local_grain_size - crossfade_size || grain_index < crossfade_size);
+    bool grain_in_crossfade_range = ( local_grain_size > MIN_GRAIN_SIZE);
+    bool can_be_crossfaded = index_in_crossfade_range && grain_in_crossfade_range;
 
     bool being_zcrossed = (!grain.using_tempo && grain.using_hold && grain.zcross_window_size > 0);
 
-    bool index_too_big = (grain_index > local_grain_size);
-    //make sure there are enough samples to declick
-
-    //if using tempo, moving zcross window size makes samples not being declicked
-    if (grain.crossfade < 1 && !being_zcrossed && !index_too_big && grain_in_declick_range && grain_offset >= DECLICK_WINDOW * 2 && index_in_declick_range) {
+    if (crossfade_size < 1 && !being_zcrossed && grain_offset >= DECLICK_WINDOW * 2 && can_be_declicked) {
         sample = declick(grain, dbg);
     }
 
-    if (grain.crossfade > 1 && !being_zcrossed && grain_in_crossfade_range && grain_offset >= crossfade_size && index_in_crossfade_range) {
+    //do crossfading or declicking depending on whether which one is more suitable
+
+    if (crossfade_size >= 1 && !being_zcrossed && grain_offset >= crossfade_size && can_be_crossfaded) {
 
         //woaah calm down, dont use that big of a gain
         //this might introduce a click
@@ -321,8 +328,9 @@ float Grain::declick(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
 
     //moving average
 
+    const float DECLICK_WINDOW = grain.declick_window;
     const int declick_offset = declick_count - DECLICK_WINDOW;
-    const int grain_offset_plus_size = (int)local_grain_offset + (int)local_grain_size;
+    const int grain_offset_plus_size = local_grain_offset + local_grain_size;
     int penalty = 0;
     float sample = 0;
 
@@ -347,12 +355,12 @@ float Grain::declick(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
     else if (grain.using_hold) {
         declick_sum -= declick_prev_sample;
         declick_prev_sample = grain_buffer[grain_offset_plus_size + declick_offset];
-        declick_sum += grain_buffer[(int)local_grain_offset + declick_count - 1];
+        declick_sum += grain_buffer[local_grain_offset + declick_count - 1];
     } 
     else {
         declick_sum -= declick_prev_sample;
         declick_prev_sample = grain_buffer[grain_offset_plus_size - penalty + declick_offset];
-        declick_sum += grain_buffer[(int)local_grain_offset + local_grain_ratio - penalty + declick_count - 1];
+        declick_sum += grain_buffer[local_grain_offset + local_grain_ratio - penalty + declick_count - 1];
     }
 
     sample = declick_sum / DECLICK_WINDOW;
@@ -370,42 +378,36 @@ float Grain::declick(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
 
 float Grain::crossfade(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
 
-    const int grain_offset_plus_size = (int)local_grain_offset + (int)local_grain_size;
-    float crossfade_offset_hold = crossfade_size - crossfade_count;
     float crossfade_offset = -crossfade_size + crossfade_count;
-    float penalty = 0;
-    float penalty1 = 0;
+    float penalty_ratio = 0;
+    float penalty_size = 0;
     float sample = 0;
-    float up_or_down = 1;
 
     if (grain_index < crossfade_size) {
-        up_or_down *= -1;
-        if (grain.using_hold) {
-            crossfade_offset_hold -= crossfade_size;
-            crossfade_offset *= up_or_down;
-        }
-        else {
-            crossfade_offset += crossfade_size;
-        }
-        penalty = local_grain_ratio * 2;
-        penalty1 = local_grain_size;
+        crossfade_offset += crossfade_size;
+        penalty_ratio = local_grain_ratio * 2;
+        penalty_size = local_grain_size;
     }
 
-    //if new offsets, that means we have to crossfade from previous grain 
-    //if (grain_index <= crossfade_size) {
-    //    up_or_down *= -1;
-    //}
+    // fade in samples from before the start of the current grain
+    // if index was reset, fade out samples from the end of previous grain
 
     if (grain.using_hold) {
-        sample = grain_buffer[local_grain_offset + penalty1 + crossfade_offset_hold];
+        sample = grain_buffer[local_grain_offset + penalty_size + crossfade_offset];
     }
+    // go into the future and fade in samples from before the start of the next grain
+    // if index was reset, ratio has to be subtracted twice, since offset has been
+    // moved by grain_ratio, and also grain_size has to be added so it fades out
+    // samples from the end of the previous grain
     else {
-        sample = grain_buffer[local_grain_offset + local_grain_ratio - penalty + penalty1 + crossfade_offset];
+        sample = grain_buffer[local_grain_offset + local_grain_ratio - penalty_ratio + penalty_size + crossfade_offset];
     }
 
     crossfade_count++;
     crossfade_gain += crossfade_gain_value;
 
+    // index will never be equal to grain size since its going to be reset
+    // check if its about to be reset instead
     if (grain_index >= local_grain_size-1) {
         crossfade_count = 0;
     }

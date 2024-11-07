@@ -19,6 +19,7 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     new components::AttachedToggleButton(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::hold]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::offset]),
     new components::AttachedToggleButton(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::tempo_toggle]),
+    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::declick]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::grain]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::tempo]),
     new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::ratio]),
@@ -32,7 +33,7 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     using PASlider = AttachedSlider*;
     using PAToggle = AttachedToggleButton*;
 
-    setSize (400, 500);
+    setSize (p.get_editor_width(), p.get_editor_height());
     setup();
 
     components[PID::help]->get()->setColour(1, colours::component_background);
@@ -41,8 +42,17 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
 
     offset->param.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
     offset->param.setSliderSnapsToMousePosition(false);
+    offset->param.setTextBoxIsEditable(false);
     offset->param.setColour(juce::Slider::trackColourId, colours::invisible);
-    offset->param.setColour(juce::Slider::backgroundColourId, colours::thumb);
+    offset->param.setColour(juce::Slider::backgroundColourId, colours::thumb);    
+    
+    auto declick = dynamic_cast<PASlider>(components[PID::declick]);
+
+    declick->param.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
+    declick->param.setSliderSnapsToMousePosition(false);
+    declick->param.setTextBoxIsEditable(false);
+    declick->param.setColour(juce::Slider::trackColourId, colours::invisible);
+    declick->param.setColour(juce::Slider::backgroundColourId, colours::thumb);
 
     for (int i = PID::help; i < PID::end; ++i) {
         components[i]->set_bounds(components_bounds[i]);
@@ -61,6 +71,7 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
                 slider->param.setColour(juce::Slider::textBoxTextColourId, colours::invisible);
             }
 
+            //fix by getting value from parameter not from component in stretcheditor
             //bug with this when changing params not from ui when tempo on
             //slider->param.onValueChange = [&]() { repaint(); };
         }
@@ -69,13 +80,14 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     }
 
     auto hold = dynamic_cast<PAToggle>(components[PID::hold]);
-    hold->param.onStateChange = [&]() { repaint(); };    
+    //hold->param.onStateChange = [&]() { repaint(); };    
 
     auto tempo_toggle = dynamic_cast<PAToggle>(components[PID::tempo_toggle]);
     tempo_toggle->param.setButtonText("tempo");
-    tempo_toggle->param.onStateChange = [&]() { repaint(); };
+    //tempo_toggle->param.onStateChange = [&]() { repaint(); };
     //auto ratio = dynamic_cast<PASlider>(components[PID::ratio]);
 
+    declick_text_bounds = StretchBounds(components[PID::declick]->get()->getBounds());
     grain_text_bounds = StretchBounds(components[PID::grain]->get()->getBounds(), -20);
     ratio_text_bounds = StretchBounds(components[PID::ratio]->get()->getBounds(), -20);
     zwindow_text_bounds = StretchBounds(components[PID::zwindow]->get()->getBounds(), -20);
@@ -126,21 +138,17 @@ void StretchAudioProcessorEditor::resized()
     int abs_slider = int(slider_width / abs_scale);
     auto help = dynamic_cast<components::AttachedTextButton*>(components[PID::help]);
 
-    components[PID::trigger]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
-    components[PID::hold]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
-    components[PID::offset]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
-    components[PID::tempo_toggle]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
+    components[PID::trigger]->get()->       setTransform(juce::AffineTransform::scale(abs_scale, abs_scale ));
+    components[PID::hold]->get()->          setTransform(juce::AffineTransform::scale(abs_scale, abs_scale ));
+    components[PID::offset]->get()->        setTransform(juce::AffineTransform::scale(abs_scale, abs_scale ));
+    components[PID::declick]->get()->       setTransform(juce::AffineTransform::scale(abs_scale, abs_scale ));
+    components[PID::tempo_toggle]->get()->  setTransform(juce::AffineTransform::scale(abs_scale, abs_scale ));
 
     temp_bounds = help->original_bounds;
     help->param.setCentrePosition(0, 0);
     help->param.setBounds(temp_bounds);
     //i struggled way too much with this...
-    help->param.setTransform(juce::AffineTransform::scale(abs_scale, abs_scale).translated(getWidth() - 400 * abs_scale, 0));
-
-    //temp_bounds = components[PID::help]->original_bounds * abs_scale;
-    //temp_bounds.setX(getWidth() - 35 * abs_scale);
-    //components[PID::help]->get()->setBounds(temp_bounds);
-    //help->param.settex
+    help->param.setTransform(juce::AffineTransform::scale(abs_scale, abs_scale).translated(getWidth() - size_width * abs_scale, 0));
 
     for (int i = PID::grain; i < PID::end; ++i) 
     {
@@ -149,12 +157,6 @@ void StretchAudioProcessorEditor::resized()
         components[i]->get()->setBounds(temp_bounds);
         components[i]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
     }
-
-    //temp_bounds = pitchmax.original_bounds;
-    //pitchmax.slider.setCentrePosition(0, 0);
-    //pitchmax.slider.setBounds(temp_bounds);
-    ////i struggled way too much with this...
-    //pitchmax.slider.setTransform(juce::AffineTransform::scale(abs_scale, abs_scale).translated(getWidth() - 400 * abs_scale, 0));
 
 }
 
@@ -170,12 +172,20 @@ inline void StretchAudioProcessorEditor::setup() {
 
     help_texts.push_back(trigger_text);
     help_texts.push_back(hold_text);
+    help_texts.push_back(offset_text);
+    help_texts.push_back(tempo_toggle_text);
+    help_texts.push_back(declick_text);
     help_texts.push_back(grain_text);
+    help_texts.push_back(tempo_text);
     help_texts.push_back(ratio_text);
+    help_texts.push_back(subd_text);
     help_texts.push_back(zcross_text);
+    help_texts.push_back(zoffset_text);
+    help_texts.push_back(crossfade_text);
 
     getLookAndFeel().setColour(ResizableWindow::backgroundColourId, colours::background);
     getLookAndFeel().setColour(SliderIds::backgroundColourId, colours::component_background);
+    getLookAndFeel().setColour(SliderIds::textBoxTextColourId, colours::text);
     getLookAndFeel().setColour(SliderIds::trackColourId, colours::slider_track);
     getLookAndFeel().setColour(SliderIds::thumbColourId, colours::thumb);
     getLookAndFeel().setColour(SliderIds::textBoxOutlineColourId, colours::invisible);
