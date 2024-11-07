@@ -6,7 +6,7 @@
 namespace stretch
 {
 
-	const float size_width = 450;
+	const float size_width = 515;
 	const float size_height = 325;
 	const int MAX_SAMPLES_IN_BUFFER = 44100 * 100000 / 44100; // more than a day at 44100HZ, 6 hours on 192000 :sob:
 
@@ -47,8 +47,8 @@ namespace stretch
 	const juce::Range<float> ratio_range({ MIN_RATIO, MAX_RATIO }); //lol
 	const juce::Range<float> subd_range({ 0, 2 }); //subdivision range: none, triplets, dotted
 	const juce::Range<float> hold_offset_range({ 0, MAX_HOLD_OFFSET });
-	const juce::Range<float> zcross_window_range({ 0, MAX_ZCROSS_WINDOW_SIZE });
-	const juce::Range<float> zcross_offset_range({ 0, MAX_ZCROSS_HOLD_OFFSET });
+	const juce::Range<float> zwindow_range({ 0, MAX_ZCROSS_WINDOW_SIZE });
+	const juce::Range<float> zoffset_range({ 0, MAX_ZCROSS_HOLD_OFFSET });
 	const juce::Range<float> crossfade_range({ 0, MAX_CROSSFADE });
 
 	using APVTS = juce::AudioProcessorValueTreeState;
@@ -62,21 +62,21 @@ namespace stretch
 
 	enum PARAMS_IDS : int							   
 	{ 
-	  help,       trigger,	  hold,		  offset,			 tempo_toggle,   
-	  declick,    grain,	  tempo,      ratio,		     subd,			 
-      zwindow,    zoffset,	  crossfade, 					 end
+	  help,       trigger,	  hold,		  offset,			 tempo_toggle,
+	  reverse,    declick,    grain,	  tempo,			 ratio,		     
+	  subd,		  zwindow,    zoffset,	  crossfade, 	     end
 	}; //also components ids
 	const std::vector<juce::String> PARAMS_STRING_IDS  
 	{
-	 "help",     "trigger",  "hold",	 "offset",			"tempo_toggle", 
-	 "declick",  "grain",	 "tempo",    "ratio",			"subd",			
-     "zwindow",  "zoffset",	 "crossfade","declick",			"end"
+	 "help",     "trigger",  "hold",	 "offset",			"tempo_toggle",
+	 "reverse",  "declick",  "grain",	 "tempo",			"ratio",			
+	 "subd",     "zwindow",  "zoffset",	 "crossfade",		"end"
 	};
 	const std::vector<juce::Range<float>> range_vector 
 	{
-	 bool_range, bool_range, bool_range, hold_offset_range, bool_range,     
-	 declick_range, grain_range, tempo_range, ratio_range, subd_range, 
-	 zcross_window_range, zcross_offset_range, crossfade_range
+	 bool_range, bool_range, bool_range, hold_offset_range, bool_range,
+	 bool_range, declick_range, grain_range, tempo_range, ratio_range, 
+	 subd_range, zwindow_range, zoffset_range, crossfade_range
 	};
 
 	inline void add_params(UniquePVector& params) {
@@ -131,6 +131,15 @@ namespace stretch
 			Attributes()
 			.withStringFromValueFunction(string_from_val_0d)
 			.withValueFromStringFunction(val_from_string))
+		);
+
+		params.push_back(
+			std::make_unique<APVTS::Parameter>(paramID{ "reverse", reverse }, "Reverse",
+			NRange{ declick_range, 1.f}, 0.f,
+			Attributes()
+			.withStringFromValueFunction(string_from_val_0d)
+			.withValueFromStringFunction(val_from_string)
+			.withBoolean(true))
 		);		
 
 		params.push_back(
@@ -167,7 +176,7 @@ namespace stretch
 		
 		params.push_back(
 			std::make_unique<APVTS::Parameter>(paramID{ "zwindow", zwindow }, "ZCross Size",
-			NRange{ zcross_window_range, 1.f }, 0.f,
+			NRange{ zwindow_range, 1.f }, 0.f,
 			Attributes()
 			.withStringFromValueFunction(string_from_val_0d)
 			.withValueFromStringFunction(val_from_string))
@@ -175,7 +184,7 @@ namespace stretch
 		
 		params.push_back(
 			std::make_unique<APVTS::Parameter>(paramID{ "zoffset", zoffset }, "ZCross Offset",
-			NRange{ zcross_offset_range, 1.f }, 0.f,
+			NRange{ zoffset_range, 1.f }, 0.f,
 			Attributes()
 			.withStringFromValueFunction(string_from_val_0d)
 			.withValueFromStringFunction(val_from_string))
