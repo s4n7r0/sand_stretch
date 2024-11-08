@@ -3,7 +3,7 @@ Remake of my remake of dblue_stretch, with some stuff added in.
 
 [Download it from here.](https://github.com/s4n7r0/sand_stretch/releases)
 
-![image](https://github.com/s4n7r0/sand_stretch/assets/116836670/267690ba-e731-4682-a088-e9d52e7f38f7)
+<img src="https://i.imgur.com/G4KyO4w.png" width = 400>
 
 # What does it do?
 Stretches out audio, similar to how dblue_stretch does it. <br>
