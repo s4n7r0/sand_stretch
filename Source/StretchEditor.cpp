@@ -142,7 +142,7 @@ void StretchAudioProcessorEditor::draw_labels(juce::Graphics& g) {
 	temp_bounds.translate(-40, 0);
 	temp_bounds *= abs_scale;
 	//temp_bounds.setWidth(slider_width);
-	set_font_size(g, 14 * abs_scale);
+	set_font_size(g, 13 * abs_scale);
 
 	g.drawFittedText(juce::String("declick"), temp_bounds, juce::Justification::centred, 1, 0);
 

@@ -27,6 +27,10 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
             grains[channel].insert_sample(grain_info, channelData[sample], debug_strings);
         }
 
+
+        //removes inaccessible samples which were played before
+        //disabled cause i added reverse
+        /*
         int limit = MAX_GRAIN_SIZE * 64; // we need a lot for tempo...
         if(grain_info.using_hold)
             limit += grain_info.hold_offset;
@@ -39,6 +43,7 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
                 //if(channel == num_channels - 1) 
                     //send_debug_msg(String().formatted("new size: %d", grains[channel].grain_buffer.size()));
         }
+        */
 
     }
 
@@ -125,6 +130,7 @@ void Processor::set_params(APVTS& apvts, double bpm)
     grain_info.using_hold = (bool)apvts.getRawParameterValue("hold")->load();
     grain_info.hold_offset = apvts.getRawParameterValue("offset")->load();
     grain_info.using_tempo = (bool)apvts.getRawParameterValue("tempo_toggle")->load();
+    grain_info.reverse = (bool)apvts.getRawParameterValue("reverse")->load();
     grain_info.declick_window = apvts.getRawParameterValue("declick")->load();
     grain_info.declick_window = DECLICK_WINDOW * std::powf(2, grain_info.declick_window);
 
@@ -213,7 +219,6 @@ void Grain::clear_grain()
 
 float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg) 
 {
-
     local_grain_size = grain.size;
     local_grain_offset = grain_offset;
     local_grain_ratio = grain.size / grain.ratio;
@@ -267,7 +272,7 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
 
     //make sure there are enough samples for everythin
     bool index_in_declick_range = (grain_index > local_grain_size - DECLICK_WINDOW / 2 || grain_index < DECLICK_WINDOW / 2);
-    bool grain_in_declick_range = ( local_grain_size > DECLICK_WINDOW * 2);
+    bool grain_in_declick_range = ( local_grain_size > DECLICK_WINDOW * 4);
     bool can_be_declicked = index_in_declick_range && grain_in_declick_range;
 
     bool index_in_crossfade_range = (grain_index >= local_grain_size - crossfade_size || grain_index < crossfade_size);
@@ -292,12 +297,26 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
         }
 
         //if index is reaching it's size, decrease it's volume
-        float gain_in = 1 - crossfade_gain;
-        float gain_out = crossfade_gain;
+        float gain_in = 1;
+        float gain_out = 0;
+        if (!grain.reverse) {
+            gain_in = 1 - crossfade_gain;
+            gain_out = crossfade_gain;
 
-        if (grain_index < crossfade_size) {
+            if (grain_index < crossfade_size) {
+                gain_in = crossfade_gain;
+                gain_out = 1 - crossfade_gain;
+            }
+        }
+        else {
             gain_in = crossfade_gain;
             gain_out = 1 - crossfade_gain;
+
+            if (grain_index < crossfade_size) {
+                gain_in = 1 - crossfade_gain;
+                gain_out = crossfade_gain;
+            }
+
         }
 
         sample = sample * gain_in + crossfade(grain, dbg) * gain_out;
@@ -305,11 +324,21 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
     else {
         crossfade_gain = 0;
     }
+    
+    if (grain.reverse) grain_index -= 1;
+    else grain_index += 1;
 
-    grain_index++;
-
+    //move this to a function
     //if grain reached it's limits
-    if (grain_index >= local_grain_size) {
+    if (grain.reverse && grain_index <= 0) {
+        if (!grain.using_hold) {
+            grain_offset -= local_grain_ratio;
+            if (grain_offset < 0) grain_offset = 0;
+        }
+
+        grain_index = local_grain_size;
+    }
+    else if (grain_index >= local_grain_size) {
 
         //make sure there are enough samples in the buffer, and then
         if (!grain.using_hold && grain.buffer_size >= local_grain_size) {
@@ -379,14 +408,22 @@ float Grain::declick(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
 float Grain::crossfade(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
 
     float crossfade_offset = -crossfade_size + crossfade_count;
+    if (grain.reverse) crossfade_offset = crossfade_size - crossfade_count;
     float penalty_ratio = 0;
+    if (grain.reverse) penalty_ratio = local_grain_ratio * 2;
     float penalty_size = 0;
+    if (grain.reverse) penalty_size = local_grain_size;
     float sample = 0;
 
-    if (grain_index < crossfade_size) {
+    if (!grain.reverse && grain_index < crossfade_size) {
         crossfade_offset += crossfade_size;
         penalty_ratio = local_grain_ratio * 2;
         penalty_size = local_grain_size;
+    }
+    else if (grain.reverse && grain_index > local_grain_size - crossfade_size) {
+        crossfade_offset -= crossfade_size;
+        penalty_ratio = 0;
+        //penalty_size = 0;
     }
 
     // fade in samples from before the start of the current grain
@@ -409,6 +446,9 @@ float Grain::crossfade(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
     // index will never be equal to grain size since its going to be reset
     // check if its about to be reset instead
     if (grain_index >= local_grain_size-1) {
+        crossfade_count = 0;
+    }
+    else if (grain.reverse && grain_index <= 1) {
         crossfade_count = 0;
     }
 
