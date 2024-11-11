@@ -234,7 +234,6 @@ void Grain::clear_grain()
 
 float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg) 
 {
-
     local_grain_size = grain.size;
     local_grain_offset = grain_offset;
     local_grain_ratio = grain.size / grain.ratio;
