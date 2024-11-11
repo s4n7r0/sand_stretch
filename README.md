@@ -16,20 +16,20 @@ or only grains where samples at the beginning and the end of it crossed 0 (zcros
 
 ## Parameters
 
-| Name          | Description                                               |
-| ------------- | --------------------------------------------------------- |
+| Name          | Description                                               | Only works if
+| ------------- | --------------------------------------------------------- | --------------------- |
 | trigger       | start collecting samples and simultaneously output grains | 
 | hold          | hold current grain |
-| hold offset   | offset currently held grain by amount of samples |
-| tempo         | use size in note lengths instead of samples  |
+| hold offset   | offset currently held grain by amount of samples | hold is on |
+| tempo         | use size in note lengths instead of samples  | |
 | reverse       | play in reverse  |
-| declick       | smooth out the edges between the end of the current grain <br> and start of the next one <br> 4 * (2 ^ declick) samples will be declicked | 
-| grain         | size of a grain in samples |
-| note          | size of a grain in note duration |
-| ratio         | how much should the input be stretched out by |
-| subdivision   | adjusts note duration |
-| zcross size   | if set, grain gets offset to the closest zcrossed sample <br> then it's size is the distance to the next zcrossed sample <br> determined by the amount |
-| zcross offset | offsets grain to the next window of zcrossed samples |
+| declick       | smooth out the edges between the end of the current grain <br> and start of the next one <br> 4 * (2 ^ declick) samples will be declicked | crossfade is off |
+| grain         | size of a grain in samples | tempo is off |
+| note          | size of a grain in note duration | tempo is on |
+| ratio         | how much should the input be stretched out by | disabled if hold is on <br> and tempo is on |
+| subdivision   | adjusts note duration | hold is on <br> and tempo is on |
+| zcross size   | if set, grain gets offset to the closest zcrossed sample <br> then it's size is the distance to the next zcrossed sample <br> determined by the amount | hold is on |
+| zcross offset | offsets grain to the next window of zcrossed samples | hold is on |
 | crossfade     | crossfades between grains |
 
 
