@@ -95,6 +95,7 @@ void StretchAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBloc
 {
     stretch_processor.num_channels = getNumInputChannels();
     stretch_processor.sample_rate = sampleRate;
+    stretch_processor.smooth_reset(stretch::smooth_target);
     stretch_processor.setup(getNumInputChannels());
 }
 
@@ -140,8 +141,8 @@ void StretchAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce
     
     //it'd be a bit better if it set the bpm only whenever it changed.
     double bpm = 120;
-    if (auto bpmFromHost = *getPlayHead()->getPosition()->getBpm())
-        bpm = bpmFromHost;
+    //if (auto bpmFromHost = *getPlayHead()->getPosition()->getBpm())
+    //    bpm = bpmFromHost;
 
     //same here but for any param
     stretch_processor.set_params(apvts, bpm);

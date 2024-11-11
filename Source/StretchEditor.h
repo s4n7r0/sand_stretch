@@ -41,8 +41,8 @@ namespace stretch {
 	const IRec hold_bounds	   ({ 37 + 75    , 10, 55, 25 });
 	const IRec offset_bounds   ({ 112 + 55   , 10, 50, 25 });
 	const IRec tempo_toggle_bounds  ({ 167 + 50   , 10, 70, 25 });
-	const IRec declick_bounds  ({ 222 + 130   , 11, 50, 25 });
-	const IRec reverse_bounds  ({ 25 + 75 * 2, 10, 75, 25 });
+	const IRec reverse_bounds  ({ 217 + 70   , 10, 70, 25 });
+	const IRec declick_bounds  ({ 222 + 187   , 11, 50, 25 });
 	const IRec grain_bounds    ({ 25, 50,		  (int)(size_width / 1.2), 50 });
 	const IRec tempo_bounds    ({ 25, 50,		  (int)(size_width / 1.2), 50 });
 	const IRec ratio_bounds    ({ 25, 50 + 50,    (int)(size_width / 1.2), 50 });
@@ -58,6 +58,7 @@ namespace stretch {
 												hold_bounds,
 												offset_bounds,
 												tempo_toggle_bounds,
+												reverse_bounds,
 												declick_bounds,
 												grain_bounds,
 												tempo_bounds,
@@ -93,7 +94,7 @@ namespace stretch {
 	const String offset_text		("Hold Offset:   offsets held grain's position");
 	const String tempo_toggle_text  ("Tempo Toggle:  use beat length instead of grain size");
 	const String declick_text		("Declick:       declick 4 * (2 ^ declick) samples");
-	//const String reverse_text		("Reverse:       outputs samples in reverse");
+	const String reverse_text		("Reverse:       outputs grains in reverse");
 	const String grain_text			("Grain Size:    how many samples to keep in one grain");
 	const String tempo_text			("Tempo:         grain size in note duration");
 	const String ratio_text			("Ratio:         stretches input by that amount");

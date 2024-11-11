@@ -12,7 +12,7 @@ Design good and fast declicking and crossfading algorithms.
 						and the beginning of the next grain so they're smooth and connected
 						It would be nice doing a divide and conquer thing but idk if u need grain sizes divisible by 2
 
-    (Crossfading)		find a way to crossfade with the next grain.
+    (Crossfading) done  find a way to crossfade with the next grain.
 						crossfade should cover the area from
 						the start of the grain up to 25%,
 						and from 75% of the grain up to the end.
@@ -34,6 +34,8 @@ Make it sound like og dblue_stretch
 
 namespace stretch {
 
+	const float smooth_target = 0.01;
+
 	struct GrainInfo {
 		float size;
 		float ratio;
@@ -45,6 +47,8 @@ namespace stretch {
 
 		bool using_hold;
 		float hold_offset;
+
+		bool reverse;
 
 		int declick_window;
 
@@ -99,6 +103,7 @@ namespace stretch {
 		int local_zcross_window_size;
 		int local_zcross_window_offset;
 		int last_zcross_index{ 0 };
+		int last_zcross_index_reverse{ 0 };
 	};
 
 	class Processor {
@@ -118,6 +123,7 @@ namespace stretch {
 		void process(juce::AudioBuffer<float>&);
 		void set_params(APVTS&, double bpm); // this might be stupid
 		void setup(int);
+		void smooth_reset(float);
 		
 		void send_debug_msg(const juce::String&);
 		void is_mismatched();
@@ -129,9 +135,11 @@ namespace stretch {
 		bool buffer_is_dirty;
 
 		juce::Array<juce::String> debug_strings;
+		float adjust_for_sample_rate{ 0 };
 
 	private:
 		GrainInfo grain_info;
+		juce::LinearSmoothedValue<float> smooth_hold_offset;
 
 		int buffer_size;
 		bool mismatched{ false };

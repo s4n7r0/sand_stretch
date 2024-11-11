@@ -27,6 +27,10 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
             grains[channel].insert_sample(grain_info, channelData[sample], debug_strings);
         }
 
+
+        //removes inaccessible samples which were played before
+        //disabled cause i added reverse
+        /*
         int limit = MAX_GRAIN_SIZE * 64; // we need a lot for tempo...
         if(grain_info.using_hold)
             limit += grain_info.hold_offset;
@@ -39,6 +43,7 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
                 //if(channel == num_channels - 1) 
                     //send_debug_msg(String().formatted("new size: %d", grains[channel].grain_buffer.size()));
         }
+        */
 
     }
 
@@ -124,7 +129,16 @@ void Processor::set_params(APVTS& apvts, double bpm)
 
     grain_info.using_hold = (bool)apvts.getRawParameterValue("hold")->load();
     grain_info.hold_offset = apvts.getRawParameterValue("offset")->load();
+    
+    //this is kinda misleading
+    if (grain_info.hold_offset != smooth_hold_offset.getTargetValue()) {
+        smooth_hold_offset.setTargetValue(grain_info.hold_offset);
+    }
+
+    grain_info.hold_offset = smooth_hold_offset.skip(grain_info.buffer_size); 
+
     grain_info.using_tempo = (bool)apvts.getRawParameterValue("tempo_toggle")->load();
+    grain_info.reverse = (bool)apvts.getRawParameterValue("reverse")->load();
     grain_info.declick_window = apvts.getRawParameterValue("declick")->load();
     grain_info.declick_window = DECLICK_WINDOW * std::powf(2, grain_info.declick_window);
 
@@ -160,6 +174,7 @@ void Processor::set_params(APVTS& apvts, double bpm)
     if (has_zcross_offset_moved || has_zcross_window_moved) {
         for (int channel = 0; channel < num_channels; ++channel) {
             grains[channel].i_found_a_zcross = false;
+            
         }
     }
 
@@ -168,6 +183,10 @@ void Processor::set_params(APVTS& apvts, double bpm)
 
     //only crossfade up to 25% of samples
     grain_info.crossfade = apvts.getRawParameterValue("crossfade")->load();
+}
+
+void Processor::smooth_reset(float target) {
+    smooth_hold_offset.reset(sample_rate, target);
 }
 
 void Processor::send_debug_msg(const String& msg)
@@ -191,6 +210,7 @@ void Processor::is_mismatched()
     }
 }
 
+
 // GRAIN
 
 void Grain::clear_grain() 
@@ -207,6 +227,7 @@ void Grain::clear_grain()
     local_grain_offset = 0;
 
     last_zcross_index = 0;
+    last_zcross_index_reverse = 0;
 
     grain_buffer.clear();
 }
@@ -217,7 +238,7 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
     local_grain_size = grain.size;
     local_grain_offset = grain_offset;
     local_grain_ratio = grain.size / grain.ratio;
-    float crossfade_percentage = grain.crossfade / 250; // up to 40%, 50% is bugged :P
+    float crossfade_percentage = grain.crossfade / 250; // up to 40%, 50% is buggy :P
     float ratio_fraction = local_grain_ratio / grain.size;
     const float DECLICK_WINDOW = grain.declick_window;
 
@@ -250,8 +271,13 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
         }
 
         //woah slow down, lemme get some samples first
-        if(grain.buffer_size >= local_grain_size + MAX_HOLD_OFFSET)
-            local_grain_offset += grain.hold_offset;
+        if (grain.buffer_size >= local_grain_size + MAX_HOLD_OFFSET) {
+            if (!grain.reverse) local_grain_offset += grain.hold_offset;
+            else {
+                local_grain_offset -= grain.hold_offset;
+                if (local_grain_offset < 0) local_grain_offset = 0;
+            }
+        }
     }
 
     if (grain.crossfade >= 1) {
@@ -267,7 +293,7 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
 
     //make sure there are enough samples for everythin
     bool index_in_declick_range = (grain_index > local_grain_size - DECLICK_WINDOW / 2 || grain_index < DECLICK_WINDOW / 2);
-    bool grain_in_declick_range = ( local_grain_size > DECLICK_WINDOW * 2);
+    bool grain_in_declick_range = ( local_grain_size > DECLICK_WINDOW * 4);
     bool can_be_declicked = index_in_declick_range && grain_in_declick_range;
 
     bool index_in_crossfade_range = (grain_index >= local_grain_size - crossfade_size || grain_index < crossfade_size);
@@ -292,12 +318,26 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
         }
 
         //if index is reaching it's size, decrease it's volume
-        float gain_in = 1 - crossfade_gain;
-        float gain_out = crossfade_gain;
+        float gain_in = 1;
+        float gain_out = 0;
+        if (!grain.reverse) {
+            gain_in = 1 - crossfade_gain;
+            gain_out = crossfade_gain;
 
-        if (grain_index < crossfade_size) {
+            if (grain_index < crossfade_size) {
+                gain_in = crossfade_gain;
+                gain_out = 1 - crossfade_gain;
+            }
+        }
+        else {
             gain_in = crossfade_gain;
             gain_out = 1 - crossfade_gain;
+
+            if (grain_index < crossfade_size) {
+                gain_in = 1 - crossfade_gain;
+                gain_out = crossfade_gain;
+            }
+
         }
 
         sample = sample * gain_in + crossfade(grain, dbg) * gain_out;
@@ -305,11 +345,27 @@ float Grain::get_next_sample(const GrainInfo& grain, Array<String>& dbg)
     else {
         crossfade_gain = 0;
     }
+    
+    if (grain.reverse) grain_index -= 1;
+    else grain_index += 1;
 
-    grain_index++;
-
+    //move this to a function
     //if grain reached it's limits
-    if (grain_index >= local_grain_size) {
+    if (grain.reverse && grain_index <= 0) {
+
+        if (!grain.using_hold) {
+            grain_offset -= local_grain_ratio;
+            if (grain_offset < 0) {
+                grain_offset = 0;
+                grain_index = 0;
+                return 0.f; //you've reached the end pls go forwards
+            }
+        }
+
+        grain_index = local_grain_size;
+
+    }
+    else if (grain_index >= local_grain_size) {
 
         //make sure there are enough samples in the buffer, and then
         if (!grain.using_hold && grain.buffer_size >= local_grain_size) {
@@ -329,13 +385,24 @@ float Grain::declick(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
     //moving average
 
     const float DECLICK_WINDOW = grain.declick_window;
-    const int declick_offset = declick_count - DECLICK_WINDOW;
+    const int declick_offset = declick_count - DECLICK_WINDOW; // declick_count - declick_window
     const int grain_offset_plus_size = local_grain_offset + local_grain_size;
     int penalty = 0;
     float sample = 0;
+    int i = -DECLICK_WINDOW;
+    int limit = 0;
+
+    if (grain.reverse) {
+        i = 0;
+        limit = DECLICK_WINDOW;
+        //penalty = local_grain_ratio;
+    }
 
     //adjust from where we read samples if not holding, since offset moved it's place
-    if (grain_index <= DECLICK_WINDOW / 2) {
+    if (!grain.reverse && grain_index <= DECLICK_WINDOW / 2) {
+        penalty = local_grain_ratio;
+    }
+    else if (grain.reverse && grain_index >= local_grain_size - DECLICK_WINDOW / 2) {
         penalty = local_grain_ratio;
     }
 
@@ -346,28 +413,53 @@ float Grain::declick(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
     //looks like we just started
     if (declick_count == 0) {
 
-        declick_prev_sample = grain_buffer[grain_offset_plus_size - DECLICK_WINDOW];
-
-        for (int i = -DECLICK_WINDOW + declick_count; i < 0; ++i) {
-            declick_sum += grain_buffer[grain_offset_plus_size + i];
+        if (grain.reverse) {
+            declick_prev_sample = grain_buffer[local_grain_offset + DECLICK_WINDOW];
+            for (; i < limit; ++i) {
+                declick_sum += grain_buffer[local_grain_offset + i];
+            }
+        }
+        else {
+            declick_prev_sample = grain_buffer[grain_offset_plus_size - DECLICK_WINDOW];
+            for (; i < limit; ++i) {
+                declick_sum += grain_buffer[grain_offset_plus_size + i];
+            }
         }
     } 
+
     else if (grain.using_hold) {
         declick_sum -= declick_prev_sample;
-        declick_prev_sample = grain_buffer[grain_offset_plus_size + declick_offset];
-        declick_sum += grain_buffer[local_grain_offset + declick_count - 1];
+        if (!grain.reverse) {
+            declick_prev_sample = grain_buffer[grain_offset_plus_size + declick_offset];
+            declick_sum += grain_buffer[local_grain_offset + declick_count - 1];
+        }
+        else {
+            declick_prev_sample = grain_buffer[local_grain_offset + (DECLICK_WINDOW - declick_count) - 1];
+            declick_sum += grain_buffer[grain_offset_plus_size - declick_count - 1];
+        }
     } 
     else {
         declick_sum -= declick_prev_sample;
-        declick_prev_sample = grain_buffer[grain_offset_plus_size - penalty + declick_offset];
-        declick_sum += grain_buffer[local_grain_offset + local_grain_ratio - penalty + declick_count - 1];
+        if (!grain.reverse) {
+            declick_prev_sample = grain_buffer[grain_offset_plus_size - penalty + declick_offset];
+            declick_sum += grain_buffer[local_grain_offset + local_grain_ratio - penalty + declick_count - 1];
+        }
+        else {
+            declick_prev_sample = grain_buffer[local_grain_offset + penalty + (DECLICK_WINDOW - declick_count) - 1];
+            declick_sum += grain_buffer[grain_offset_plus_size - local_grain_ratio + penalty - (DECLICK_WINDOW - declick_count) - 1];
+        }
     }
 
     sample = declick_sum / DECLICK_WINDOW;
     declick_count++;
 
     //if index is about to reach the end of declicking window, reset the count
-    if (grain_index + 1 + DECLICK_WINDOW / 2 == DECLICK_WINDOW) {
+    if (!grain.reverse && grain_index + 1 + DECLICK_WINDOW / 2 == DECLICK_WINDOW) {
+        declick_count = 0;
+        declick_sum = 0;
+        declick_prev_sample = 0;
+    }
+    else if (grain.reverse && grain_index - 1 - DECLICK_WINDOW / 2 == local_grain_size - DECLICK_WINDOW) {
         declick_count = 0;
         declick_sum = 0;
         declick_prev_sample = 0;
@@ -379,14 +471,22 @@ float Grain::declick(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
 float Grain::crossfade(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
 
     float crossfade_offset = -crossfade_size + crossfade_count;
+    if (grain.reverse) crossfade_offset = crossfade_size - crossfade_count;
     float penalty_ratio = 0;
+    if (grain.reverse) penalty_ratio = local_grain_ratio * 2;
     float penalty_size = 0;
+    if (grain.reverse) penalty_size = local_grain_size;
     float sample = 0;
 
-    if (grain_index < crossfade_size) {
+    if (!grain.reverse && grain_index < crossfade_size) {
         crossfade_offset += crossfade_size;
         penalty_ratio = local_grain_ratio * 2;
         penalty_size = local_grain_size;
+    }
+    else if (grain.reverse && grain_index > local_grain_size - crossfade_size) {
+        crossfade_offset -= crossfade_size;
+        penalty_ratio = 0;
+        //penalty_size = 0;
     }
 
     // fade in samples from before the start of the current grain
@@ -411,35 +511,71 @@ float Grain::crossfade(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
     if (grain_index >= local_grain_size-1) {
         crossfade_count = 0;
     }
+    else if (grain.reverse && grain_index <= 1) {
+        crossfade_count = 0;
+    }
 
     return sample;
 }
 
-void  Grain::set_zcross_bounds(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
+void Grain::set_zcross_bounds(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
 
     if (i_found_a_zcross) return;
-
+    if (!i_found_a_zcross) {
+        last_zcross_index = 0;
+        last_zcross_index_reverse = grain.zcross_samples.size() - 1;
+    }
     if (grain.zcross_window_size + grain.zcross_window_offset > grain.zcross_samples.size()) return;
 
-    for (int i = last_zcross_index; i < grain.zcross_samples.size(); ++i) {
+    if (!grain.reverse) {
+        for (int i = last_zcross_index; i < grain.zcross_samples.size(); ++i) {
 
-        if (grain.zcross_samples[i] >= grain_offset + grain.zcross_samples[0]) {
+            if (grain.zcross_samples[i] >= grain_offset + grain.zcross_samples[0]) {
 
-            //i might use it for something one day...
-            int temp_zcross_offset = grain.zcross_samples[grain.zcross_window_offset + i];
-            int temp_zcross_size = temp_zcross_offset - grain.zcross_samples[grain.zcross_window_offset + i - grain.zcross_window_size];
+                //i might use it for something one day...
+                int temp_zcross_offset = grain.zcross_samples[grain.zcross_window_offset + i];
+                int temp_zcross_size = temp_zcross_offset - grain.zcross_samples[grain.zcross_window_offset + i - grain.zcross_window_size];
 
-            zcross_grain_size = temp_zcross_size;
-            zcross_grain_offset = grain.zcross_samples[i];
-            send_debug_msg(String().formatted("zcrossoff: %d, zcrosssize: %d", zcross_grain_offset, zcross_grain_size), dbg);
+                zcross_grain_size = temp_zcross_size;
+                zcross_grain_offset = grain.zcross_samples[i];
 
-            local_zcross_window_offset = grain.zcross_window_offset;
-            local_zcross_window_size = grain.zcross_window_size;
+                local_zcross_window_offset = grain.zcross_window_offset;
+                local_zcross_window_size = grain.zcross_window_size;
 
-            i_found_a_zcross = true;
-            last_zcross_index = i; //save the index so its faster to find the next one in case offsets moved
+                i_found_a_zcross = true;
+                last_zcross_index = i; //save the index so its faster to find the next one in case offsets moved
 
-            return;
+                return;
+            }
+        }
+    }
+    else {
+        for (int i = last_zcross_index_reverse; i >= 0; --i) {
+
+            if (grain.zcross_samples[i] <= grain_offset + grain.zcross_samples[0]) {
+                //i might use it for something one day...
+                int index_offset = i - grain.zcross_window_offset;
+                int index_size = index_offset - grain.zcross_window_size;
+                if (index_offset < 0) index_offset = 0;
+
+                if (index_size < 0) {
+                    index_size += grain.zcross_window_size;
+                }
+
+                int temp_zcross_offset = grain.zcross_samples[index_offset];
+                int temp_zcross_size = temp_zcross_offset - grain.zcross_samples[index_size];
+
+                zcross_grain_size = temp_zcross_size;
+                zcross_grain_offset = grain.zcross_samples[index_offset];
+
+                local_zcross_window_offset = grain.zcross_window_offset;
+                local_zcross_window_size = grain.zcross_window_size;
+
+                i_found_a_zcross = true;
+                last_zcross_index_reverse = i; //save the index so its faster to find the next one in case offsets moved
+
+                return;
+            }
         }
     }
 }
