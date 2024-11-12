@@ -1,5 +1,5 @@
 # sand_stretch2
-Remake of my remake of dblue_stretch, with some stuff added in.
+Remake of dblue_stretch, with some stuff added in.
 
 [Download it from here.](https://github.com/s4n7r0/sand_stretch/releases)
 
