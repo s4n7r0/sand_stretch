@@ -10,27 +10,58 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
-
+#include "StretchEditor.h"
+using namespace stretch::components;
 //==============================================================================
 /**
 */
-class sand_stretchAudioProcessorEditor  : public juce::AudioProcessorEditor, private juce::Slider::Listener
+class StretchAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
-    sand_stretchAudioProcessorEditor (sand_stretchAudioProcessor&);
-    ~sand_stretchAudioProcessorEditor() override;
+    StretchAudioProcessorEditor(StretchAudioProcessor&);
+    ~StretchAudioProcessorEditor() override;
 
     //==============================================================================
-    void paint (juce::Graphics&) override;
+    void paint(juce::Graphics&) override;
     void resized() override;
+    inline void setup();
+
+    void show_or_hide();
+
+    void set_font_size(juce::Graphics& g, float size) {
+        text_size = size;
+        g.setFont(size);
+    }
+
+    void set_scales();
+    void draw_labels(juce::Graphics& g);
+    void draw_help(juce::Graphics& g);
+    void draw_debug(juce::Graphics& g);
 
 private:
-
-    void sliderValueChanged(juce::Slider* slider) override;
-
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
-    sand_stretchAudioProcessor& audioProcessor;
-    
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (sand_stretchAudioProcessorEditor)
+    StretchAudioProcessor& audioProcessor;
+
+    float text_size;
+    float x_scale;
+    float y_scale;
+    float abs_scale;
+    float slider_width;
+
+    std::vector<String> help_texts;
+    bool help_state;
+
+    std::array<AttachedComponent*, 14> components; // TODO: fix the leak
+
+    stretch::StretchBounds grain_text_bounds;
+    stretch::StretchBounds ratio_text_bounds;
+    stretch::StretchBounds zwindow_text_bounds;
+    stretch::StretchBounds zoffset_text_bounds;
+    stretch::StretchBounds crossfade_text_bounds;
+    stretch::StretchBounds declick_text_bounds;
+
+    //stretch::URLTimer url_timer;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StretchAudioProcessorEditor)
 };

@@ -1,91 +1,81 @@
-# sand_stretch
-Remake of dblue_stretch in JUCE framework with some stuff added in.
+# sand_stretch2
+Remake of my remake of dblue_stretch, with some stuff added in.
 
 [Download it from here.](https://github.com/s4n7r0/sand_stretch/releases)
 
-![image](https://github.com/s4n7r0/sand_stretch/assets/116836670/267690ba-e731-4682-a088-e9d52e7f38f7)
+<img src="https://i.imgur.com/G4KyO4w.png" width = 400>
 
-## Important notes
-
-This plugin was not tested in every daw under every condition. Issues may occur
-such as audio getting desynced, crashes or lag.
-
-The provided .vst3 was built on a windows machine and may or may not work on a mac.
-
-## Info
-
-I made this plugin because:
-
-- I wanted to learn plugin development.
-
-- 64-bit version of dblue_stretch doesn't exist (rip ableton :<)
-
-- i wanted to add some features to the original plugin.
-
-Didn't do it in an object oriented style cause im a lazy bum and rather
-do it procedurally, so excuse my big processBlock lmao.
+# What does it do?
+Stretches out audio, similar to how dblue_stretch does it. <br>
+But since everyone I know doesn't use it in that way (me included), <br>
+it also works as a sort of "glitch" machine. <br>
+It collects the input into the buffer and then outputs grains <Br>
+with the given size, delayed by the given ratio. <br>
+Grains can be held in place, played in reverse, synced to a note duration, crossfaded, <br> 
+or only grains where samples at the beginning and the end of it crossed 0 (zcrossed samples) <br>
 
 ## Parameters
 
-| Name | Description |
-| ----------- | ----------- |
-| Trigger               | Self-explanatory. |
-| Hold                  | Holds current frame in place. | 
-| Reverse               | Outputs samples in reverse. |
-| Reduce DC Offset      | Attempts to remove dc offset but often fails lol, use an eq after to be safe. |
-| Ratio                 | Stretches input by that amount, e.g. ratio = 2.5, audio gets stretched out by 2.5x. |
-| Samples               | How many samples to keep in a frame. |
-| Skip Samples          | Instead of outputting samples one by one, it skips some by that amount. (**WARNING**: it's dangerous because it can lead to weird issues with other features.) |
-| Crossfade             | Crossfades beginning and the end of a frame to smooth it out. |
-| Hold Offset           | Offsets currently held frame by that amount. |
-| zCross Window Size    | Holds a frame of samples that crossed 0. Only works when Hold is on. |
-| zCross Window Offset  | Offsets the window of zcrossing samples. |
-| bufferSize            | How many seconds to store in the buffer. `(sampleRate * bufferSize)` amount of samples.|
+| Name          | Description                                               | Only works if
+| ------------- | --------------------------------------------------------- | --------------------- |
+| trigger       | start collecting samples and simultaneously output grains | 
+| hold          | hold current grain |
+| hold offset   | offset currently held grain by amount of samples | hold is on |
+| tempo         | use size in note lengths instead of samples  | |
+| reverse       | play in reverse  |
+| declick       | smooth out the edges between the end of the current grain <br> and start of the next one <br> 4 * (2 ^ declick) samples will be declicked | crossfade is off |
+| grain         | size of a grain in samples | tempo is off |
+| note          | size of a grain in note duration | tempo is on |
+| ratio         | how much should the input be stretched out by | disabled if hold is on <br> and tempo is on |
+| subdivision   | adjusts note duration | hold is on <br> and tempo is on |
+| zcross size   | if set, grain gets offset to the closest zcrossed sample <br> then it's size is the distance to the next zcrossed sample <br> determined by the amount | hold is on |
+| zcross offset | offsets grain to the next window of zcrossed samples | hold is on |
+| crossfade     | crossfades between grains |
 
 
 ## How to build from source
 
-### Prequesties
-
-#### Required
+### Prerequesities
 
 - JUCE
-- Your system C++ build toolchain (Visual Studio on Windows, XCode on Mac, GCC/Clang on Linux, etc.)
+- Your system C++ build toolchain (Visual Studio on Windows, XCode on Mac, GCC/Clang on Linux, etc.
 
-#### Optional
+## Building (the Projucer way)
 
-- CMake (**NOTE**: CMake script is only tested on Linux at the moment. Please contribute)
-- Ninja (useful on Linux)
-
-### Building (the Projucer way)
-
+- ```git clone https://github.com/s4n7r0/sand_stretch.git```
 - Open Projucer
-- Open `sand_stretch.jucer` in Projucer
-- Add your system build configuration if neccessary (there is only Windows target at the moment), then save the `.jucer` file
+- Open `sand_stretch_remake.jucer` in Projucer
+- Select your system build configuration, save the project
 - Build the plugin using the generated project in the `Build` folder. Which means:
-  + Run Visual Studio/Xcode and open the appropriate `.sln`/`xcodeproject`, then compile (Win/Mac)
-  + `cd Builds/LinuxMakefile && make` (Linux)
-
-### Building (the CMake way)
-
-Assuming you are in the root folder, then run these 2 commands in the terminal/command prompt:
-
-```
-cmake -Bbuild
-cmake --build build --config Release
-```
-
-Optionally, on Linux, use Ninja to speed up the build by replacing the first command with `cmake -Bbuild -GNinja`.
+  + Run Visual Studio/Xcode and open the appropriate project, either the generated `.sln`/`xcodeproject` or thru Projucer (Win/Mac)
+  # MAC
+  + If wanna build the plugin in AU format, you need to add AU plugin format in Project Settings's in Projucer
+  + Product > Scheme > Edit Scheme... > Run > Build Configuration > Select "Release"
+  + Build
+  + Built plugin in any format should be copied to "~/Library/Audio/Plug-Ins/" to their respective folders, but if not:
+  + Copy the compiled sand_stretch2.vst3 from "Builds/MaxOSX/build/Release/sand_stretch2.vst3" to "~/Library/Audio/Plug-Ins/VST3"
+  + Copy the compiled sand_stretch2.component from "Builds/MaxOSX/build/Release/sand_stretch2.component" to "~/Library/Audio/Plug-Ins/Components" ( if building as an AU )
+  # WINDOWS
+  + Select "Release" configuration (Win)
+  + Build
+  + Copy the compiled sand_stretch2.vst3 from "Builds\VisualStudio2022\x64\Release\VST3\sand_stretch2.vst3\Contents\x86_64-win\" to "C:\Program Files\Common Files\VST3\" (Win)
+  # LINUX
+  + `cd Builds/LinuxMakefile && make CONFIG=Release`
+  + Built VST3 should be copied to "~/.vst3/" but if not:
+  + `mkdir ~/.vst3`
+  + `mv "Builds/LinuxMakefile/build/sand_stretch2.vst3/Contents/x86_64-linux/sand_stretch2.so" "~/.vst3/sand_stretch2.vst3"`
 
 ## Credits
 
-- Illformed - creator of dblue_stretch - https://illformed.org/
-- JUCE Framework - https://juce.com/
+[Illformed](https://illformed.com/)
+
+[JUCE](https://juce.com/)
 
 ## Support
 
-[Soundcloud](https://www.soundcloud.com/s4n7r0)
+[Gumroad](https://s4n7r0.gumroad.com) <br>
+[Soundcloud](https://www.soundcloud.com/s4n7r0) <br>
+[Twitter](https://www.twitter.com/s4n7r0) <br>
+[Bandcamp](https://s4n7r0.bandcamp.com/) <br>
+[Bluesky](https://bsky.app/profile/sandr0.bsky.social) <br>
 
-[Twitter](https://www.twitter.com/s4n7r0)
-
-[Bandcamp](https://s4n7r0.bandcamp.com/)
