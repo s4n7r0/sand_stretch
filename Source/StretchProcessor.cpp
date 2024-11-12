@@ -137,7 +137,7 @@ void Processor::set_params(APVTS& apvts, double bpm)
     grain_info.using_tempo = (bool)apvts.getRawParameterValue("tempo_toggle")->load();
     grain_info.reverse = (bool)apvts.getRawParameterValue("reverse")->load();
     grain_info.declick_window = apvts.getRawParameterValue("declick")->load();
-    grain_info.declick_window = DECLICK_WINDOW * adjust_for_sample_rate * std::powf(2, grain_info.declick_window);
+    grain_info.declick_window = DECLICK_WINDOW * adjust_for_sample_rate * std::pow(2, grain_info.declick_window);
 
     grain_info.size = apvts.getRawParameterValue("grain")->load() * adjust_for_sample_rate;
     grain_info.ratio = apvts.getRawParameterValue("ratio")->load();
