@@ -61,7 +61,7 @@ private:
     stretch::StretchBounds crossfade_text_bounds;
     stretch::StretchBounds declick_text_bounds;
 
-    //stretch::URLTimer url_timer;
+    stretch::URLTimer url_timer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StretchAudioProcessorEditor)
 };

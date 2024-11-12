@@ -89,7 +89,6 @@ namespace stretch {
 	//call set_font after using
 	const juce::Font monospace_font(juce::FontOptions(juce::Font::getDefaultMonospacedFontName(), 0, juce::Font::plain));
 
-	const String trigger_text		("Trigger:       start the engine");
 	const String hold_text			("Hold:          holds current grain in place");
 	const String offset_text		("Hold Offset:   offsets held grain's position");
 	const String tempo_toggle_text  ("Tempo Toggle:  use beat length instead of grain size");
@@ -105,6 +104,6 @@ namespace stretch {
 
 	const juce::String contact_text("If you have any issues, please contact me on \ndiscord: .sandr0");
 	const juce::String version_text("Ver: " + STRETCH_VER);
-	const juce::URL    my_site("Placeholder");
+	const juce::URL    my_site("https://s4n7r0.gumroad.com/l/sand_stretch2");
 
 }
