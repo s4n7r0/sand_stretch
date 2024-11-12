@@ -12,29 +12,29 @@
 
 using namespace stretch;
 //==============================================================================
-StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor& p)
+StretchAudioProcessorEditor::StretchAudioProcessorEditor(StretchAudioProcessor& p)
     : AudioProcessorEditor(&p), audioProcessor(p), help_state{ false }, components{
-    new components::AttachedTextButton  ("?"),
+    new components::AttachedTextButton("?"),
     new components::AttachedToggleButton(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::trigger]),
     new components::AttachedToggleButton(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::hold]),
-    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::offset]),
+    new components::AttachedSlider(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::offset]),
     new components::AttachedToggleButton(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::tempo_toggle]),
     new components::AttachedToggleButton(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::reverse]),
-    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::declick]),
-    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::grain]),
-    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::tempo]),
-    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::ratio]),
-    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::subd]),
-    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::zwindow]),
-    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::zoffset]),
-    new components::AttachedSlider      (p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::crossfade])
+    new components::AttachedSlider(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::declick]),
+    new components::AttachedSlider(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::grain]),
+    new components::AttachedSlider(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::tempo]),
+    new components::AttachedSlider(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::ratio]),
+    new components::AttachedSlider(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::subd]),
+    new components::AttachedSlider(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::zwindow]),
+    new components::AttachedSlider(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::zoffset]),
+    new components::AttachedSlider(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::crossfade])
     }
 {
     using PID = PARAMS_IDS;
     using PASlider = AttachedSlider*;
     using PAToggle = AttachedToggleButton*;
 
-    setSize (p.get_editor_width(), p.get_editor_height());
+    setSize(p.get_editor_width(), p.get_editor_height());
     setup();
 
     components[PID::help]->get()->setColour(1, colours::component_background);
@@ -45,8 +45,8 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor (StretchAudioProcessor&
     offset->param.setSliderSnapsToMousePosition(false);
     offset->param.setTextBoxIsEditable(false);
     offset->param.setColour(juce::Slider::trackColourId, colours::invisible);
-    offset->param.setColour(juce::Slider::backgroundColourId, colours::thumb);    
-    
+    offset->param.setColour(juce::Slider::backgroundColourId, colours::thumb);
+
     auto declick = dynamic_cast<PASlider>(components[PID::declick]);
 
     declick->param.setSliderStyle(juce::Slider::SliderStyle::LinearBarVertical);
@@ -110,7 +110,7 @@ StretchAudioProcessorEditor::~StretchAudioProcessorEditor()
 }
 
 //==============================================================================
-void StretchAudioProcessorEditor::paint (juce::Graphics& g)
+void StretchAudioProcessorEditor::paint(juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
     g.fillAll(colours::background);
@@ -142,12 +142,12 @@ void StretchAudioProcessorEditor::resized()
     int abs_slider = int(slider_width / abs_scale);
     auto help = dynamic_cast<components::AttachedTextButton*>(components[PID::help]);
 
-    components[PID::trigger]->get()->       setTransform(juce::AffineTransform::scale(abs_scale, abs_scale ));
-    components[PID::hold]->get()->          setTransform(juce::AffineTransform::scale(abs_scale, abs_scale ));
-    components[PID::offset]->get()->        setTransform(juce::AffineTransform::scale(abs_scale, abs_scale ));
-    components[PID::tempo_toggle]->get()->  setTransform(juce::AffineTransform::scale(abs_scale, abs_scale ));
-    components[PID::reverse]->get()->       setTransform(juce::AffineTransform::scale(abs_scale, abs_scale ));
-    components[PID::declick]->get()->       setTransform(juce::AffineTransform::scale(abs_scale, abs_scale ));
+    components[PID::trigger]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
+    components[PID::hold]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
+    components[PID::offset]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
+    components[PID::tempo_toggle]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
+    components[PID::reverse]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
+    components[PID::declick]->get()->setTransform(juce::AffineTransform::scale(abs_scale, abs_scale));
 
     temp_bounds = help->original_bounds;
     help->param.setCentrePosition(0, 0);
@@ -155,7 +155,7 @@ void StretchAudioProcessorEditor::resized()
     //i struggled way too much with this...
     help->param.setTransform(juce::AffineTransform::scale(abs_scale, abs_scale).translated(getWidth() - size_width * abs_scale, 0));
 
-    for (int i = PID::grain; i < PID::end; ++i) 
+    for (int i = PID::grain; i < PID::end; ++i)
     {
         temp_bounds = components[i]->original_bounds;
         temp_bounds.setWidth(abs_slider);

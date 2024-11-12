@@ -125,6 +125,7 @@ namespace stretch {
 		void setup(int);
 		void smooth_reset(float);
 		
+		//enable show debug in editor
 		void send_debug_msg(const juce::String&);
 		void is_mismatched();
 

@@ -28,7 +28,6 @@ void Processor::fill_buffer(juce::AudioBuffer<float>& input_buffer)
             grains[channel].insert_sample(grain_info, channelData[sample], debug_strings);
         }
 
-
         //removes inaccessible samples which were played before
         //disabled cause i added reverse
         /*
@@ -57,12 +56,11 @@ void Processor::zcross(juce::AudioBuffer<float>& input_buffer) {
 
     int num_samples = input_buffer.getNumSamples();
     int num_channels = input_buffer.getNumChannels();
-    //static int zcross_index = 0;
 
     float summed_sample = 0;
 
     for (int sample = 0; sample < num_samples; ++sample) {
-
+        summed_sample = 0;
         for (int channel = 0; channel < num_channels; ++channel) {
             auto channelData = input_buffer.getReadPointer(channel);
             summed_sample += channelData[sample];
@@ -79,13 +77,11 @@ void Processor::zcross(juce::AudioBuffer<float>& input_buffer) {
         if (summed_sample > 0 && cur_zcross_state == ZCROSS_STATE::BELOW) {
             grain_info.zcross_samples.add(grain_info.buffer_size + sample);
             cur_zcross_state = ZCROSS_STATE::ABOVE;
-            //send_debug_msg(String().formatted("ayy we got a zcross index at: %d", grain_info.buffer_size + sample));
         }        
         
         if (summed_sample < 0 && cur_zcross_state == ZCROSS_STATE::ABOVE) {
             grain_info.zcross_samples.add(grain_info.buffer_size + sample);
             cur_zcross_state = ZCROSS_STATE::BELOW;
-            //send_debug_msg(String().formatted("ayy we got a zcross index at: %d", grain_info.buffer_size + sample));
         }
 
     }
@@ -121,7 +117,7 @@ void Processor::process(juce::AudioBuffer<float>& output_buffer)
 
     }
 
-    is_mismatched();
+    //is_mismatched();
 
 }
 
@@ -485,7 +481,6 @@ float Grain::crossfade(const GrainInfo& grain, juce::Array<juce::String>& dbg) {
     else if (grain.reverse && grain_index > local_grain_size - crossfade_size) {
         crossfade_offset -= crossfade_size;
         penalty_ratio = 0;
-        //penalty_size = 0;
     }
 
     // fade in samples from before the start of the current grain

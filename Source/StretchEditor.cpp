@@ -1,9 +1,9 @@
 /*
   ==============================================================================
 
-    StretchEditor.cpp
-    Created: 31 Oct 2024 12:20:58am
-    Author:  MSI
+	StretchEditor.cpp
+	Created: 31 Oct 2024 12:20:58am
+	Author:  MSI
 
   ==============================================================================
 */
@@ -124,8 +124,8 @@ void StretchAudioProcessorEditor::draw_labels(juce::Graphics& g) {
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
 
-	g.drawFittedText(juce::String("zcross size"), temp_bounds, juce::Justification::right, 1, 0);	
-	
+	g.drawFittedText(juce::String("zcross size"), temp_bounds, juce::Justification::right, 1, 0);
+
 	temp_bounds = zoffset_text_bounds.bounds;
 	temp_bounds *= abs_scale;
 	temp_bounds.setWidth(slider_width);
@@ -183,6 +183,7 @@ void StretchAudioProcessorEditor::draw_help(juce::Graphics& g) {
 
 void StretchAudioProcessorEditor::draw_debug(juce::Graphics& g) {
 
+	return;
 	using namespace stretch;
 
 	set_font_size(g, 15 * abs_scale);
@@ -191,7 +192,7 @@ void StretchAudioProcessorEditor::draw_debug(juce::Graphics& g) {
 
 	for (int i = 0; i < 5; ++i) {
 		debug_bound.setY(315 + 25 * i);
-		g.drawFittedText(audioProcessor.stretch_processor.debug_strings[i], debug_bound , juce::Justification::left, 1, 0);
+		g.drawFittedText(audioProcessor.stretch_processor.debug_strings[i], debug_bound, juce::Justification::left, 1, 0);
 	}
 
 }

@@ -15,27 +15,27 @@ using namespace stretch::components;
 //==============================================================================
 /**
 */
-class StretchAudioProcessorEditor  : public juce::AudioProcessorEditor
+class StretchAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
-    StretchAudioProcessorEditor (StretchAudioProcessor&);
+    StretchAudioProcessorEditor(StretchAudioProcessor&);
     ~StretchAudioProcessorEditor() override;
 
     //==============================================================================
-    void paint (juce::Graphics&) override;
+    void paint(juce::Graphics&) override;
     void resized() override;
     inline void setup();
 
     void show_or_hide();
 
-    void set_font_size(juce::Graphics&g, float size) {
+    void set_font_size(juce::Graphics& g, float size) {
         text_size = size;
         g.setFont(size);
     }
-    
+
     void set_scales();
-    void draw_labels(juce::Graphics&g);
-    void draw_help(juce::Graphics&g);
+    void draw_labels(juce::Graphics& g);
+    void draw_help(juce::Graphics& g);
     void draw_debug(juce::Graphics& g);
 
 private:
@@ -63,5 +63,5 @@ private:
 
     //stretch::URLTimer url_timer;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (StretchAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StretchAudioProcessorEditor)
 };

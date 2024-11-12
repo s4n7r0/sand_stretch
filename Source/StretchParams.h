@@ -7,7 +7,7 @@ namespace stretch
 {
 
 	const float size_width = 515;
-	const float size_height = 325;
+	const float size_height = 315;
 	const int MAX_SAMPLES_IN_BUFFER = 44100 * 100000 / 44100; // more than a day at 44100HZ, 6 hours on 192000 :sob:
 
 	#ifdef DBLUE_COMPATIBILITY
