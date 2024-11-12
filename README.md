@@ -14,6 +14,8 @@ with the given size, delayed by the given ratio. <br>
 Grains can be held in place, played in reverse, synced to a note duration, crossfaded, <br> 
 or only grains where samples at the beginning and the end of it crossed 0 (zcrossed samples) <br>
 
+This plugin is not an exact 1:1 recreation of dblue_stretch and is not supposed to replace it.
+
 ## Parameters
 
 | Name          | Description                                               | Only works if
