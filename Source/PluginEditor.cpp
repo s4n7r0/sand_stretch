@@ -28,8 +28,9 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor(StretchAudioProcessor& 
     new components::AttachedSlider(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::zwindow]),
     new components::AttachedSlider(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::zoffset]),
     new components::AttachedSlider(p, stretch::PARAMS_STRING_IDS[PARAMS_IDS::crossfade])
-    }
+    }, url_timer(*components[stretch::PARAMS_IDS::help]->get())
 {
+
     using PID = PARAMS_IDS;
     using PASlider = AttachedSlider*;
     using PAToggle = AttachedToggleButton*;
@@ -38,6 +39,15 @@ StretchAudioProcessorEditor::StretchAudioProcessorEditor(StretchAudioProcessor& 
     setup();
 
     components[PID::help]->get()->setColour(1, colours::component_background);
+
+    auto help = dynamic_cast<AttachedTextButton*>(components[PID::help]);
+
+    help->param.onClick = [&]() {
+        if (my_site.launchInDefaultBrowser()) {
+            components[PID::help]->get()->setVisible(false);
+            url_timer.startTimer(1000);
+            }
+        };
 
     auto offset = dynamic_cast<PASlider>(components[PID::offset]);
 
@@ -175,7 +185,6 @@ inline void StretchAudioProcessorEditor::setup() {
     setResizable(true, true);
     setRepaintsOnMouseActivity(true);
 
-    help_texts.push_back(trigger_text);
     help_texts.push_back(hold_text);
     help_texts.push_back(offset_text);
     help_texts.push_back(tempo_toggle_text);
