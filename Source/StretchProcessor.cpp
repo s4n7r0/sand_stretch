@@ -7,6 +7,7 @@ using namespace stretch;
 void Processor::setup(int num_channels) 
 {
     grains.resize(num_channels);
+    adjust_for_sample_rate = sample_rate / 44100;
 
     debug_strings.resize(5);
 }
@@ -128,7 +129,7 @@ void Processor::set_params(APVTS& apvts, double bpm)
 {
 
     grain_info.using_hold = (bool)apvts.getRawParameterValue("hold")->load();
-    grain_info.hold_offset = apvts.getRawParameterValue("offset")->load();
+    grain_info.hold_offset = apvts.getRawParameterValue("offset")->load() * adjust_for_sample_rate;
     
     //this is kinda misleading
     if (grain_info.hold_offset != smooth_hold_offset.getTargetValue()) {
@@ -140,16 +141,16 @@ void Processor::set_params(APVTS& apvts, double bpm)
     grain_info.using_tempo = (bool)apvts.getRawParameterValue("tempo_toggle")->load();
     grain_info.reverse = (bool)apvts.getRawParameterValue("reverse")->load();
     grain_info.declick_window = apvts.getRawParameterValue("declick")->load();
-    grain_info.declick_window = DECLICK_WINDOW * std::powf(2, grain_info.declick_window);
+    grain_info.declick_window = DECLICK_WINDOW * adjust_for_sample_rate * std::powf(2, grain_info.declick_window);
 
-    grain_info.size = apvts.getRawParameterValue("grain")->load();
+    grain_info.size = apvts.getRawParameterValue("grain")->load() * adjust_for_sample_rate;
     grain_info.ratio = apvts.getRawParameterValue("ratio")->load();
     
     int beat_subdivision = (int)apvts.getRawParameterValue("subd")->load();
     grain_info.beat_duration = sample_rate * (60 / bpm); //60 s
     grain_info.beat_fraction = apvts.getRawParameterValue("tempo")->load();
     grain_info.beat_fraction = grain_info.beat_duration / std::pow(2, MAX_TEMPO_SIZE - grain_info.beat_fraction);
-    grain_info.beat_fraction *= 4;
+    grain_info.beat_fraction *= 4 * adjust_for_sample_rate;
 
     if (grain_info.using_hold) {
         if (grain_info.using_tempo) {
@@ -174,7 +175,6 @@ void Processor::set_params(APVTS& apvts, double bpm)
     if (has_zcross_offset_moved || has_zcross_window_moved) {
         for (int channel = 0; channel < num_channels; ++channel) {
             grains[channel].i_found_a_zcross = false;
-            
         }
     }
 

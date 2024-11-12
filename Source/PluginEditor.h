@@ -52,7 +52,7 @@ private:
     std::vector<String> help_texts;
     bool help_state;
 
-    std::vector<AttachedComponent*> components; // TODO: fix the leak
+    std::array<AttachedComponent*, 14> components; // TODO: fix the leak
 
     stretch::StretchBounds grain_text_bounds;
     stretch::StretchBounds ratio_text_bounds;

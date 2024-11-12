@@ -52,7 +52,7 @@ namespace stretch {
 	const IRec crossfade_bounds  ({ 25, 200 + 50, (int)(size_width / 1.2), 50 });
 
 	//remember to update params header too
-	const std::vector<IRec> components_bounds{
+	const std::array<IRec, 14> components_bounds{
 												help_bounds,
 												trigger_bounds,
 												hold_bounds,
