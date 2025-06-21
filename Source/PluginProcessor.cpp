@@ -12,14 +12,16 @@
 //==============================================================================
 StretchAudioProcessor::StretchAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     :  undo(), apvts(*this, &undo, "PARAMETERS", stretch::create_layout()), stretch_processor(), AudioProcessor(BusesProperties()
+     : AudioProcessor(BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ), stretch_processor(), undo(), apvts(*this, &undo, "PARAMETERS", stretch::create_layout())
+#else
+     : stretch_processor(), undo(), apvts(*this, &undo, "PARAMETERS", stretch::create_layout())
 #endif
 {
 }

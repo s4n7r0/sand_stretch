@@ -56,10 +56,10 @@
  #define JucePlugin_ManufacturerEmail      ""
 #endif
 #ifndef  JucePlugin_ManufacturerCode
- #define JucePlugin_ManufacturerCode       0x4d616e75
+ #define JucePlugin_ManufacturerCode       0x536e6472
 #endif
 #ifndef  JucePlugin_PluginCode
- #define JucePlugin_PluginCode             0x476e6335
+ #define JucePlugin_PluginCode             0x5373326b
 #endif
 #ifndef  JucePlugin_IsSynth
  #define JucePlugin_IsSynth                0
@@ -101,19 +101,19 @@
  #define JucePlugin_AUSubType              JucePlugin_PluginCode
 #endif
 #ifndef  JucePlugin_AUExportPrefix
- #define JucePlugin_AUExportPrefix         sand_stretch_remakeAU
+ #define JucePlugin_AUExportPrefix         sand_stretch2AU
 #endif
 #ifndef  JucePlugin_AUExportPrefixQuoted
- #define JucePlugin_AUExportPrefixQuoted   "sand_stretch_remakeAU"
+ #define JucePlugin_AUExportPrefixQuoted   "sand_stretch2AU"
 #endif
 #ifndef  JucePlugin_AUManufacturerCode
  #define JucePlugin_AUManufacturerCode     JucePlugin_ManufacturerCode
 #endif
 #ifndef  JucePlugin_CFBundleIdentifier
- #define JucePlugin_CFBundleIdentifier     com.yourcompany.sand_stretch_remake
+ #define JucePlugin_CFBundleIdentifier     com.sandr0.sand_stretch2
 #endif
 #ifndef  JucePlugin_AAXIdentifier
- #define JucePlugin_AAXIdentifier          com.yourcompany.sand_stretch_remake
+ #define JucePlugin_AAXIdentifier          com.sandr0.sand_stretch2
 #endif
 #ifndef  JucePlugin_AAXManufacturerCode
  #define JucePlugin_AAXManufacturerCode    JucePlugin_ManufacturerCode
@@ -122,7 +122,7 @@
  #define JucePlugin_AAXProductId           JucePlugin_PluginCode
 #endif
 #ifndef  JucePlugin_AAXCategory
- #define JucePlugin_AAXCategory            0
+ #define JucePlugin_AAXCategory            2
 #endif
 #ifndef  JucePlugin_AAXDisableBypass
  #define JucePlugin_AAXDisableBypass       0
@@ -159,4 +159,13 @@
 #endif
 #ifndef  JucePlugin_ARACompatibleArchiveIDs
  #define JucePlugin_ARACompatibleArchiveIDs  ""
+#endif
+#ifndef  JucePlugin_MaxNumInputChannels
+ #define JucePlugin_MaxNumInputChannels    2
+#endif
+#ifndef  JucePlugin_MaxNumOutputChannels
+ #define JucePlugin_MaxNumOutputChannels   2
+#endif
+#ifndef  JucePlugin_PreferredChannelConfigurations
+ #define JucePlugin_PreferredChannelConfigurations  {1, 1}, {2, 2}
 #endif

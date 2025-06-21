@@ -3,7 +3,12 @@
 <JUCERPROJECT id="GNc5yK" name="sand_stretch_remake" projectType="audioplug"
               useAppConfig="0" addUsingNamespaceToJuceHeader="1" jucerFormatVersion="1"
               companyWebsite="https://github.com/s4n7r0" pluginManufacturer="sandr0"
-              pluginName="sand_stretch2">
+              pluginName="sand_stretch2" bundleIdentifier="com.sandr0.sand_stretch2"
+              pluginManufacturerCode="Sndr" pluginCode="Ss2k" pluginChannelConfigs="{1, 1}, {2, 2}"
+              pluginIsSynth="0" pluginWantsMidiIn="0" pluginProducesMidiOut="0"
+              pluginIsMidiEffectPlugin="0" pluginEditorRequiresKeys="0" pluginAUExportPrefix="sand_stretch2AU"
+              pluginRTASCategory="" aaxIdentifier="com.sandr0.sand_stretch2"
+              pluginAAXCategory="2">
   <MAINGROUP id="ALHTTM" name="sand_stretch_remake">
     <GROUP id="{FDEA2C7D-880D-8010-949E-BF1317FBAC38}" name="Source">
       <FILE id="xXwO71" name="StretchEditor.cpp" compile="1" resource="0"
@@ -42,6 +47,28 @@
   </MODULES>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="sand_stretch2" osxSDK="default"
+                       osxCompatibility="10.13 SDK" osxArchitecture="x86_64,arm64" macOSDeploymentTarget="10.13"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="sand_stretch2" osxSDK="default"
+                       osxCompatibility="10.13 SDK" osxArchitecture="x86_64,arm64" macOSDeploymentTarget="10.13"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="/Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="/Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="/Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="/Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="/Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="/Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="/Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="/Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="/Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="/Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="/Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="/Applications/JUCE/modules"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
     <VS2022 targetFolder="Builds/VisualStudio2022">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="sand_stretch2"/>
